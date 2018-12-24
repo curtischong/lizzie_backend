@@ -1,4 +1,4 @@
-package main
+package lizzie_todoist_worker
 
 import (
 	"bytes"
@@ -42,7 +42,7 @@ func readConfig() Configuration {
 	return configuration
 }
 
-func main() {
+func startTodoist() {
 	config := readConfig()
 	fmt.Println("asd")
 	getTasks(config)

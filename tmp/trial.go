@@ -1,4 +1,4 @@
-package main
+/*package main
 
 import (
 	"net/http"
@@ -17,3 +17,4 @@ func main() {
 		panic(err)
 	}
 }
+*/

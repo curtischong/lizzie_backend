@@ -1,4 +1,4 @@
-package main
+package lizzie_calendar_worker
 
 import (
 	"encoding/json"
@@ -70,7 +70,7 @@ func saveToken(path string, token *oauth2.Token) {
 	json.NewEncoder(f).Encode(token)
 }
 
-func main() {
+func startCalendar() {
 	b, err := ioutil.ReadFile("../config/calendar_credentials.json")
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
