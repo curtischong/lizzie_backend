@@ -19,9 +19,37 @@ type server struct {
 func (s server) routes() {
 	s.router.HandleFunc("/watch_bio_snapshot", s.watchBioSnapshotCall())
 	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall())
+	s.router.HandleFunc("/upload_emotion_evaluation", s.uploadEmotionEvaluationCall())
 	//s.router.HandleFunc("/admin", s.adminOnly(s.handleAdminIndex()))
 }
+func (s *server) uploadEmotionEvaluationCall() http.HandlerFunc {
+	return func(w http.ResponseWriter, response *http.Request) {
 
+		if response.Body == nil {
+			http.Error(w, "Please send a request body", 400)
+			return
+		}
+		body, readErr := ioutil.ReadAll(response.Body)
+		if readErr != nil {
+			log.Println("failed here")
+			log.Fatal(readErr)
+		}
+
+		parsedResonse := bioworker.EmotionEvaluation{}
+		jsonErr := json.Unmarshal(body, &parsedResonse)
+		if jsonErr != nil {
+			log.Println(body)
+			log.Printf("error decoding emotion evaluation response: %v", jsonErr)
+			if e, ok := jsonErr.(*json.SyntaxError); ok {
+				log.Printf("syntax error at byte offset %d", e.Offset)
+			}
+			log.Printf("watch response: %q", body)
+		}
+
+		fmt.Println(parsedResonse.TiredEval)
+		fmt.Fprintf(w, "bio snapshot")
+	}
+}
 func (s *server) watchBioSnapshotCall() http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		if response.Body == nil {
