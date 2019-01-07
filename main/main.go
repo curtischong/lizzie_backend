@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 type Config struct {
@@ -207,6 +208,11 @@ func insertMarkEvent(sample bioworker.MarkEvent, config DatabaseConfigObj) {
 		log.Fatal(err3)
 	}
 
+	parsedTimeOfMark, err := strconv.ParseFloat(sample.TimeOfMark, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	parsedTimeStartFillingForm, err := strconv.ParseFloat(sample.TimeStartFillingForm, 64)
 	if err != nil {
 		log.Fatal(err)
@@ -250,7 +256,7 @@ func insertMarkEvent(sample bioworker.MarkEvent, config DatabaseConfigObj) {
 		"biometricsViewedHR":   typeBiometricsViewed[0],
 	}
 
-	pt, err := client.NewPoint("markEvents", nil, fields, serverutuls.StringToDate(sample.TimeOfMark))
+	pt, err := client.NewPoint("markEvents", nil, fields, time.Unix(0, int64(parsedTimeOfMark*1000000)))
 	if err != nil {
 		log.Fatal(err)
 	}
