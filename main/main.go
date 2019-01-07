@@ -222,6 +222,11 @@ func insertMarkEvent(sample bioworker.MarkEvent, config DatabaseConfigObj) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	parsedIsReaction, err := strconv.Atoi(sample.IsReaction)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	parsedAnticipationStart, err := strconv.ParseFloat(sample.AnticipationStart, 64)
 	if err != nil {
 		log.Fatal(err)
@@ -237,11 +242,31 @@ func insertMarkEvent(sample bioworker.MarkEvent, config DatabaseConfigObj) {
 
 	// Create a point and add to batch
 	//tags := map[string]string{"": "cpu-total"}
+
+	/*
+		fields := map[string]interface{}{
+			"timeStartFillingForm": parsedTimeStartFillingForm,
+			"timeEndFillingForm":   parsedTimeEndFillingForm,
+			"isReaction":           parsedIsReaction,
+			"anticipationStart":    parsedAnticipationStart,
+			"timeOfEvent":          parsedTimeOfEvent,
+			"reactionEnd":          parsedReactionEnd,
+			"emotionsFeltFear":     emotionRatings[0],
+			"emotionsFeltJoy":      emotionRatings[1],
+			"emotionsFeltAnger":    emotionRatings[2],
+			"emotionsFeltSad":      emotionRatings[3],
+			"emotionsFeltDisgust":  emotionRatings[4],
+			"emotionsFeltSuprise":  emotionRatings[5],
+			"emotionsFeltContempt": emotionRatings[6],
+			"emotionsFeltInterest": emotionRatings[7],
+			"comments":             sample.Comments,
+			"biometricsViewedHR":   typeBiometricsViewed[0],
+		}*/
+
 	fields := map[string]interface{}{
 		"timeStartFillingForm": parsedTimeStartFillingForm,
 		"timeEndFillingForm":   parsedTimeEndFillingForm,
-		"isReaction":           sample.IsReaction,
-		"anticipationStart":    parsedAnticipationStart,
+		"isReaction":           parsedIsReaction,
 		"timeOfEvent":          parsedTimeOfEvent,
 		"reactionEnd":          parsedReactionEnd,
 		"emotionsFeltFear":     emotionRatings[0],
@@ -254,6 +279,10 @@ func insertMarkEvent(sample bioworker.MarkEvent, config DatabaseConfigObj) {
 		"emotionsFeltInterest": emotionRatings[7],
 		"comments":             sample.Comments,
 		"biometricsViewedHR":   typeBiometricsViewed[0],
+	}
+
+	if parsedIsReaction == 0 {
+		fields["anticipationStart"] = parsedAnticipationStart
 	}
 
 	pt, err := client.NewPoint("markEvents", nil, fields, time.Unix(0, int64(parsedTimeOfMark*1000000)))
