@@ -30,8 +30,8 @@ type server struct {
 
 // Watch
 func (s server) routes(config DatabaseConfigObj) {
-	s.router.HandleFunc("/watch_bio_snapshot", s.watchBioSnapshotCall())
 	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall())
+	s.router.HandleFunc("/upload_bio_samples", s.uploadBioSamplesCall(config))
 	s.router.HandleFunc("/upload_emotion_evaluation", s.uploadEmotionEvaluationCall(config))
 	s.router.HandleFunc("/upload_mark_event", s.uploadMarkEventCall(config))
 	//s.router.HandleFunc("/admin", s.adminOnly(s.handleAdminIndex()))
@@ -95,7 +95,7 @@ func (s *server) uploadMarkEventCall(config DatabaseConfigObj) http.HandlerFunc 
 		insertMarkEvent(parsedResonse, config)
 	}
 }
-func (s *server) watchBioSnapshotCall() http.HandlerFunc {
+func (s *server) uploadBioSamplesCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		if response.Body == nil {
 			http.Error(w, "Please send a request body", 400)
@@ -107,7 +107,7 @@ func (s *server) watchBioSnapshotCall() http.HandlerFunc {
 			log.Fatal(readErr)
 		}
 
-		parsedResonse := bioworker.BioSnapshot{}
+		parsedResonse := bioworker.BioSamples{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
@@ -118,8 +118,10 @@ func (s *server) watchBioSnapshotCall() http.HandlerFunc {
 			log.Printf("watch response: %q", body)
 		}
 
-		fmt.Println(parsedResonse.Heartrate)
+		//fmt.Println(parsedResonse)
 		fmt.Fprintf(w, "bio snapshot")
+
+		insertBioSamples(parsedResonse, config)
 	}
 }
 
@@ -166,7 +168,7 @@ func insertEmotionEvaluation(sample bioworker.EmotionEvaluation, config Database
 	if err := c.Write(bp); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("added point!")
+	log.Printf("added emotionEvaluation!")
 
 	// Close client resources
 	if err := c.Close(); err != nil {
@@ -240,29 +242,6 @@ func insertMarkEvent(sample bioworker.MarkEvent, config DatabaseConfigObj) {
 		log.Fatal(err)
 	}
 
-	// Create a point and add to batch
-	//tags := map[string]string{"": "cpu-total"}
-
-	/*
-		fields := map[string]interface{}{
-			"timeStartFillingForm": parsedTimeStartFillingForm,
-			"timeEndFillingForm":   parsedTimeEndFillingForm,
-			"isReaction":           parsedIsReaction,
-			"anticipationStart":    parsedAnticipationStart,
-			"timeOfEvent":          parsedTimeOfEvent,
-			"reactionEnd":          parsedReactionEnd,
-			"emotionsFeltFear":     emotionRatings[0],
-			"emotionsFeltJoy":      emotionRatings[1],
-			"emotionsFeltAnger":    emotionRatings[2],
-			"emotionsFeltSad":      emotionRatings[3],
-			"emotionsFeltDisgust":  emotionRatings[4],
-			"emotionsFeltSuprise":  emotionRatings[5],
-			"emotionsFeltContempt": emotionRatings[6],
-			"emotionsFeltInterest": emotionRatings[7],
-			"comments":             sample.Comments,
-			"biometricsViewedHR":   typeBiometricsViewed[0],
-		}*/
-
 	fields := map[string]interface{}{
 		"timeStartFillingForm": parsedTimeStartFillingForm,
 		"timeEndFillingForm":   parsedTimeEndFillingForm,
@@ -295,7 +274,76 @@ func insertMarkEvent(sample bioworker.MarkEvent, config DatabaseConfigObj) {
 	if err := c.Write(bp); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("added point!")
+	log.Printf("added MarkEvent!")
+
+	// Close client resources
+	if err := c.Close(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func insertBioSamples(sample bioworker.BioSamples, config DatabaseConfigObj) {
+	// Create a new HTTPClient
+	c, err := client.NewHTTPClient(client.HTTPConfig{
+		Addr:     "http://10.8.0.1:8086",
+		Username: config.Username,
+		Password: config.Password,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer c.Close()
+
+	// Create a new point batch
+	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
+		Database:  config.Dbname,
+		Precision: "s",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var dataPointNames []string
+	err2 := json.Unmarshal([]byte(sample.DataPointNames), &dataPointNames)
+	if err != nil {
+		log.Fatal(err2)
+	}
+
+	var startTimes []string
+	_ = json.Unmarshal([]byte(sample.StartTimes), &startTimes)
+
+	var endTimes []string
+	_ = json.Unmarshal([]byte(sample.EndTimes), &endTimes)
+
+	//TODO: please unmarshal directly into a float
+	var measurements_string []string
+	_ = json.Unmarshal([]byte(sample.Measurements), &measurements_string)
+
+	for i := 0; i < len(dataPointNames); i++ {
+
+		measurement, err := strconv.ParseFloat(measurements_string[i], 64)
+
+		parsedStartTime, err := strconv.ParseFloat(startTimes[i], 64)
+		parsedEndTime, err := strconv.ParseFloat(endTimes[i], 64)
+
+		fields := map[string]interface{}{
+			"dataPointName": dataPointNames[i],
+			"startTime":     parsedStartTime,
+			"measurement":   measurement,
+		}
+
+		pt, err := client.NewPoint("bioSamples", nil, fields, time.Unix(0, int64(parsedEndTime*1000000)))
+		if err != nil {
+			log.Fatal(err)
+		}
+		bp.AddPoint(pt)
+	}
+
+	// Write the batch
+	if err := c.Write(bp); err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("added BioSamples!")
 
 	// Close client resources
 	if err := c.Close(); err != nil {
