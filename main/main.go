@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	bioworker "github.com/curtischong/lizzie_server/bioworker"
+	serverutuls "github.com/curtischong/lizzie_server/serverutils"
 	typerworker "github.com/curtischong/lizzie_server/typerworker"
 	"github.com/influxdata/influxdb/client/v2"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"time"
+	"strconv"
 )
 
 type Config struct {
@@ -26,23 +27,12 @@ type server struct {
 	router *http.ServeMux
 }
 
-func stringToDate(unparsed string) time.Time {
-	layout := "2006-01-02 15:04:05"
-	t, err := time.Parse(layout, unparsed)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-	//fmt.Println(t.Format("20060102150405"))
-	return t
-}
-
 // Watch
 func (s server) routes(config DatabaseConfigObj) {
 	s.router.HandleFunc("/watch_bio_snapshot", s.watchBioSnapshotCall())
 	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall())
 	s.router.HandleFunc("/upload_emotion_evaluation", s.uploadEmotionEvaluationCall(config))
-	s.router.HandleFunc("/upload_mark_event", s.uploadMarkEvent(config))
+	s.router.HandleFunc("/upload_mark_event", s.uploadMarkEventCall(config))
 	//s.router.HandleFunc("/admin", s.adminOnly(s.handleAdminIndex()))
 }
 func (s *server) uploadEmotionEvaluationCall(config DatabaseConfigObj) http.HandlerFunc {
@@ -73,6 +63,35 @@ func (s *server) uploadEmotionEvaluationCall(config DatabaseConfigObj) http.Hand
 		fmt.Fprintf(w, "bio snapshot")
 
 		insertEmotionEvaluation(parsedResonse, config)
+	}
+}
+func (s *server) uploadMarkEventCall(config DatabaseConfigObj) http.HandlerFunc {
+	return func(w http.ResponseWriter, response *http.Request) {
+		if response.Body == nil {
+			http.Error(w, "Please send a request body", 400)
+			return
+		}
+		body, readErr := ioutil.ReadAll(response.Body)
+		if readErr != nil {
+			log.Println("failed here")
+			log.Fatal(readErr)
+		}
+
+		parsedResonse := bioworker.MarkEvent{}
+		jsonErr := json.Unmarshal(body, &parsedResonse)
+		if jsonErr != nil {
+			log.Println(body)
+			log.Printf("error decoding watch response: %v", jsonErr)
+			if e, ok := jsonErr.(*json.SyntaxError); ok {
+				log.Printf("syntax error at byte offset %d", e.Offset)
+			}
+			log.Printf("watch response: %q", body)
+		}
+
+		fmt.Println(parsedResonse.IsReaction)
+		fmt.Fprintf(w, "bio snapshot")
+
+		insertMarkEvent(parsedResonse, config)
 	}
 }
 func (s *server) watchBioSnapshotCall() http.HandlerFunc {
@@ -136,7 +155,7 @@ func insertEmotionEvaluation(sample bioworker.EmotionEvaluation, config Database
 		"comments":             sample.Comments,
 	}
 
-	pt, err := client.NewPoint("emotionEvaluation", nil, fields, stringToDate(sample.TimeEndFillingForm))
+	pt, err := client.NewPoint("emotionEvaluations", nil, fields, serverutuls.StringToDate(sample.TimeEndFillingForm))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -155,7 +174,7 @@ func insertEmotionEvaluation(sample bioworker.EmotionEvaluation, config Database
 }
 
 //TODO: udpate the type to MarkEvent
-func uploadMarkEvent(sample bioworker.EmotionEvaluation, config DatabaseConfigObj) {
+func insertMarkEvent(sample bioworker.MarkEvent, config DatabaseConfigObj) {
 	// Create a new HTTPClient
 	c, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     "http://10.8.0.1:8086",
@@ -170,8 +189,42 @@ func uploadMarkEvent(sample bioworker.EmotionEvaluation, config DatabaseConfigOb
 	// Create a new point batch
 	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  config.Dbname,
-		Precision: "s",
+		Precision: "ms",
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var emotionRatings []int
+	err2 := json.Unmarshal([]byte(sample.EmotionsFelt), &emotionRatings)
+	if err != nil {
+		log.Fatal(err2)
+	}
+
+	var typeBiometricsViewed []int
+	err3 := json.Unmarshal([]byte(sample.TypeBiometricsViewed), &typeBiometricsViewed)
+	if err != nil {
+		log.Fatal(err3)
+	}
+
+	parsedTimeStartFillingForm, err := strconv.ParseFloat(sample.TimeStartFillingForm, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	parsedTimeEndFillingForm, err := strconv.ParseFloat(sample.TimeEndFillingForm, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+	parsedAnticipationStart, err := strconv.ParseFloat(sample.AnticipationStart, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+	parsedTimeOfEvent, err := strconv.ParseFloat(sample.TimeOfEvent, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+	parsedReactionEnd, err := strconv.ParseFloat(sample.ReactionEnd, 64)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -179,16 +232,25 @@ func uploadMarkEvent(sample bioworker.EmotionEvaluation, config DatabaseConfigOb
 	// Create a point and add to batch
 	//tags := map[string]string{"": "cpu-total"}
 	fields := map[string]interface{}{
-		"timeStartFillingForm": sample.TimeStartFillingForm,
-		"normalEval":           sample.NormalEval,
-		"socialEval":           sample.SocialEval,
-		"exhaustedEval":        sample.ExhaustedEval,
-		"tiredEval":            sample.TiredEval,
-		"happyEval":            sample.HappyEval,
+		"timeStartFillingForm": parsedTimeStartFillingForm,
+		"timeEndFillingForm":   parsedTimeEndFillingForm,
+		"isReaction":           sample.IsReaction,
+		"anticipationStart":    parsedAnticipationStart,
+		"timeOfEvent":          parsedTimeOfEvent,
+		"reactionEnd":          parsedReactionEnd,
+		"emotionsFeltFear":     emotionRatings[0],
+		"emotionsFeltJoy":      emotionRatings[1],
+		"emotionsFeltAnger":    emotionRatings[2],
+		"emotionsFeltSad":      emotionRatings[3],
+		"emotionsFeltDisgust":  emotionRatings[4],
+		"emotionsFeltSuprise":  emotionRatings[5],
+		"emotionsFeltContempt": emotionRatings[6],
+		"emotionsFeltInterest": emotionRatings[7],
 		"comments":             sample.Comments,
+		"biometricsViewedHR":   typeBiometricsViewed[0],
 	}
 
-	pt, err := client.NewPoint("emotionEvaluation", nil, fields, stringToDate(sample.TimeEndFillingForm))
+	pt, err := client.NewPoint("markEvents", nil, fields, serverutuls.StringToDate(sample.TimeOfMark))
 	if err != nil {
 		log.Fatal(err)
 	}

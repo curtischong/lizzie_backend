@@ -22,10 +22,10 @@ type MarkEvent struct {
 	TimeEndFillingForm   string `json:"timeEndFillingForm"`
 	TimeOfMark           string `json:"timeOfMark"`
 	IsReaction           string `json:"isReaction"`
-	LeftCrop             string `json:"leftCrop"`
-	RightCrop            string `json:"rightCrop"`
-	TimeOfEvent          string `json:"TimeOfEvent"`
-	EmotionsFelt         string `json:"happyEval"`
+	AnticipationStart    string `json:"anticipationStart"`
+	TimeOfEvent          string `json:"timeOfEvent"`
+	ReactionEnd          string `json:"reactionEnd"`
+	EmotionsFelt         string `json:"emotionsFelt"`
 	Comments             string `json:"comments"`
 	TypeBiometricsViewed string `json:"typeBiometricsViewed"`
 }
