@@ -1,9 +1,10 @@
 package typerworker
 
-type BioSnapshot struct {
-	TimeStart string `json:"timestart"`
-	TimeEnd   string `json:"timeend"`
-	Heartrate string `json:"heartrate"`
+type BioSamples struct {
+	DataPointNames string `json:"dataPointNames"`
+	StartTimes     string `json:"startTimes"`
+	EndTimes       string `json:"endTimes"`
+	Measurements   string `json:"measurements"`
 }
 
 type EmotionEvaluation struct {
