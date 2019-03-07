@@ -1,13 +1,15 @@
-package typerworker
+package network
 
-type BioSamples struct {
+// BioSamplesObj describes a received BioSample
+type BioSamplesObj struct {
 	DataPointNames string `json:"dataPointNames"`
 	StartTimes     string `json:"startTimes"`
 	EndTimes       string `json:"endTimes"`
 	Measurements   string `json:"measurements"`
 }
 
-type EmotionEvaluation struct {
+// EmotionEvaluationObj describes a received EmotionEvaluation
+type EmotionEvaluationObj struct {
 	TimeStartFillingForm string `json:"timeStartFillingForm"`
 	TimeEndFillingForm   string `json:"timeEndFillingForm"`
 	NormalEval           string `json:"normalEval"`
@@ -18,7 +20,8 @@ type EmotionEvaluation struct {
 	Comments             string `json:"comments"`
 }
 
-type MarkEvent struct {
+// MarkEventObj describes a received MarkEvent
+type MarkEventObj struct {
 	TimeStartFillingForm string `json:"timeStartFillingForm"`
 	TimeEndFillingForm   string `json:"timeEndFillingForm"`
 	TimeOfMark           string `json:"timeOfMark"`
