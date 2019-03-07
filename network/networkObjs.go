@@ -33,3 +33,26 @@ type MarkEventObj struct {
 	Comments             string `json:"comments"`
 	TypeBiometricsViewed string `json:"typeBiometricsViewed"`
 }
+
+// SkillObj describes a received Skill
+type SkillObj struct {
+	Concept                  string `json:"concept"`
+	NewLearnings             string `json:"newLearnings"`
+	OldSkills                string `json:"oldSkills"`
+	PercentNew               string `json:"percentNew"`
+	TimeLearned              string `json:"timeLearned"`
+	TimeSpentLearning        string `json:"timeSpentLearning"`
+	ScheduledReviews         string `json:"scheduledReviews"`
+	ScheduledReviewDurations string `json:"scheduledReviewDurations"`
+	Reviews                  string `json:"reviews"`
+	ReviewDurations          string `json:"reviewDurations"`
+}
+
+// ReviewObj describes a received Review
+type ReviewObj struct {
+	Concept        string `json:"concept"`
+	DateReviewed   string `json:"dateReviewed"`
+	NewLearnings   string `json:"newLearnings"`
+	ReviewDuration string `json:"reviewDuration"`
+	TimeLearned    string `json:"timeLearned"`
+}

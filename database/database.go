@@ -2,6 +2,7 @@ package database
 
 import (
 	"encoding/json"
+	config "github.com/curtischong/lizzie_server/config"
 	network "github.com/curtischong/lizzie_server/network"
 	serverutuls "github.com/curtischong/lizzie_server/serverutils"
 	"github.com/influxdata/influxdb/client/v2"
@@ -13,15 +14,15 @@ import (
 type EmotionEvaluationObj = network.EmotionEvaluationObj
 type BioSamplesObj = network.BioSamplesObj
 type MarkEventObj = network.MarkEventObj
+type SkillObj = network.SkillObj
+type ReviewObj = network.ReviewObj
 
-func setupDB() Client{
-	
-}
+//type DatabaseConfigObj = database.DatabaseConfigObj
 
-func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config DatabaseConfigObj) {
-	// Create a new HTTPClient
+// setupDB returns influxDB client
+func setupDB(config DatabaseConfigObj) Client {
 	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     "http://10.8.0.2:8086",
+		Addr:     config.DBIP,
 		Username: config.Username,
 		Password: config.Password,
 	})
@@ -29,8 +30,9 @@ func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config DatabaseConf
 		log.Fatal(err)
 	}
 	defer c.Close()
+}
 
-	// Create a new point batch
+func setupBP(c Client, config DatabaseConfigObj) BatchPoints {
 	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  config.Dbname,
 		Precision: "ms",
@@ -38,9 +40,14 @@ func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config DatabaseConf
 	if err != nil {
 		log.Fatal(err)
 	}
+}
 
-	// create a point and add to batch
-	//tags := map[string]string{"": "cpu-total"}
+func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config DatabaseConfigObj) {
+	// Create a new HTTPClient
+	c = setupDB()
+	// Create a new point batch
+	bp = setupBP(c)
+
 	fields := map[string]interface{}{
 		"timeStartFillingForm": sample.timeStartFillingForm,
 		"normalEval":           sample.normalEval,
@@ -72,24 +79,9 @@ func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config DatabaseConf
 //TODO: udpate the type to MarkEventObj
 func InsertMarkEventObj(sample MarkEventObj, config DatabaseConfigObj) {
 	// Create a new HTTPClient
-	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     "http://10.8.0.2:8086",
-		Username: config.Username,
-		Password: config.Password,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer c.Close()
-
+	c = setupDB()
 	// Create a new point batch
-	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:  config.Dbname,
-		Precision: "ms",
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
+	bp = setupBP(c)
 
 	var emotionRatings []int
 	err2 := json.Unmarshal([]byte(sample.EmotionsFelt), &emotionRatings)
@@ -177,24 +169,9 @@ func InsertMarkEventObj(sample MarkEventObj, config DatabaseConfigObj) {
 
 func InsertBioSamplesObj(sample BioSamplesObj, config DatabaseConfigObj) {
 	// Create a new HTTPClient
-	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     "http://10.8.0.2:8086",
-		Username: config.Username,
-		Password: config.Password,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer c.Close()
-
+	c = setupDB()
 	// Create a new point batch
-	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:  config.Dbname,
-		Precision: "ms",
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
+	bp = setupBP(c)
 
 	var dataPointNames []string
 	err2 := json.Unmarshal([]byte(sample.DataPointNames), &dataPointNames)
@@ -244,53 +221,72 @@ func InsertBioSamplesObj(sample BioSamplesObj, config DatabaseConfigObj) {
 	}
 }
 
-func InsertReviewObj(sample EmotionEvaluationObj, config DatabaseConfigObj) {
+func InsertSkillObj(sample SkillObj, config DatabaseConfigObj) {
 	// Create a new HTTPClient
-	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     "http://10.8.0.2:8086",
-		Username: config.Username,
-		Password: config.Password,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer c.Close()
-
+	c = setupDB()
 	// Create a new point batch
-	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:  config.Dbname,
-		Precision: "ms",
-	})
+	bp = setupBP(c)
+
+	fields := map[string]interface{}{
+		"concept":                  sample.concept,
+		"newLearnings":             sample.newLearnings,
+		"oldSkills":                sample.oldSkills,
+		"percentNew":               sample.percentNew,
+		"timeLearned":              sample.timeLearned,
+		"timeSpentLearning":        sample.timeSpentLearning,
+		"scheduledReviews":         sample.scheduledReviews,
+		"scheduledReviewDurations": sample.scheduledReviewDurations,
+		"reviews":                  sample.reviews,
+		"reviewDurations":          sample.reviewDurations,
+	}
+
+	pt, err := client.NewPoint("emotionEvaluations", nil, fields, serverutuls.StringToDate(sample.timeEndFillingForm))
 	if err != nil {
 		log.Fatal(err)
 	}
+	bp.addpoint(pt)
 
-	// CREATE A POINT AND ADD TO BATCH
-	//TAGS := MAP[STRING]STRING{"": "CPU-TOTAL"}
-	FIELDS := MAP[STRING]INTERFACE{}{
-		"TIMESTARTFILLINGFORM": SAMPLE.TIMESTARTFILLINGFORM,
-		"NORMALEVAL":           SAMPLE.NORMALEVAL,
-		"SOCIALEVAL":           SAMPLE.SOCIALEVAL,
-		"EXHAUSTEDEVAL":        SAMPLE.EXHAUSTEDEVAL,
-		"TIREDEVAL":            SAMPLE.TIREDEVAL,
-		"HAPPYEVAL":            SAMPLE.HAPPYEVAL,
-		"COMMENTS":             SAMPLE.COMMENTS,
+	// write the batch
+	if err := c.write(bp); err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("added emotionevaluation!")
+
+	// close client resources
+	if err := c.close(); err != nil {
+		log.Fatal(err)
+	}
+}
+func InsertReviewObj(sample ReviewObj, config DatabaseConfigObj) {
+	// Create a new HTTPClient
+	c = setupDB()
+	// Create a new point batch
+	bp = setupBP(c)
+
+	fields := map[string]interface{}{
+		"timeStartFillingForm": sample.timeStartFillingForm,
+		"normalEval":           sample.normalEval,
+		"socialEval":           sample.socialEval,
+		"exhaustedEval":        sample.exhaustedEval,
+		"tiredEval":            sample.tiredEval,
+		"happyEval":            sample.happyEval,
+		"comments":             sample.comments,
 	}
 
-	PT, ERR := CLIENT.NEWPOINT("EMOTIONEVALUATIONS", NIL, FIELDS, SERVERUTULS.STRINGTODATE(SAMPLE.TIMEENDFILLINGFORM))
-	IF ERR != NIL {
-		LOG.FATAL(ERR)
+	pt, err := client.NewPoint("emotionEvaluations", nil, fields, serverutuls.StringToDate(sample.timeEndFillingForm))
+	if err != nil {
+		log.Fatal(err)
 	}
-	BP.ADDPOINT(PT)
+	bp.addpoint(pt)
 
-	// WRITE THE BATCH
-	IF ERR := C.WRITE(BP); ERR != NIL {
-		LOG.FATAL(ERR)
+	// write the batch
+	if err := c.write(bp); err != nil {
+		log.Fatal(err)
 	}
-	LOG.PRINTF("ADDED EMOTIONEVALUATION!")
+	log.Printf("added emotionevaluation!")
 
-	// CLOSE CLIENT RESOURCES
-	IF ERR := C.CLOSE(); ERR != NIL {
-		LOG.FATAL(ERR)
+	// close client resources
+	if err := c.close(); err != nil {
+		log.Fatal(err)
 	}
 }
