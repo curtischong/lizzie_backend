@@ -6,19 +6,22 @@ import (
 	"fmt"
 	//bioworker "github.com/curtischong/lizzie_server/bioworker"
 	config "github.com/curtischong/lizzie_server/config"
-	serverutuls "github.com/curtischong/lizzie_server/serverutils"
+	database "github.com/curtischong/lizzie_server/database"
+	network "github.com/curtischong/lizzie_server/network"
 	typerworker "github.com/curtischong/lizzie_server/typerworker"
-	"github.com/influxdata/influxdb/client/v2"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
-	"time"
 )
 
 type server struct {
 	router *http.ServeMux
 }
+
+type DatabaseConfigObj = database.DatabaseConfigObj
+type EmotionEvaluationObj = network.EmotionEvaluationObj
+type BioSamplesObj = network.BioSamplesObj
+type MarkEventObj = network.MarkEventObj
 
 // Watch
 func (s server) routes(config DatabaseConfigObj) {
@@ -30,6 +33,48 @@ func (s server) routes(config DatabaseConfigObj) {
 	s.router.HandleFunc("/upload_review", s.uploadReviewCall(config))
 	//s.router.HandleFunc("/admin", s.adminOnly(s.handleAdminIndex()))
 }
+
+func uploadBioSamplesCall(w http.ResponseWriter, response *http.Request, resCall string) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, response *http.Request) {
+		if response.Body == nil {
+			http.Error(w, "Please send a request body", 400)
+			return
+		}
+		body, readErr := ioutil.ReadAll(response.Body)
+		if readErr != nil {
+			log.Println("failed here")
+			log.Fatal(readErr)
+		}
+
+		parsedResonse := EmotionEvaluationObj{}
+		jsonErr := json.Unmarshal(body, &parsedResonse)
+		if jsonErr != nil {
+			log.Println(body)
+			log.Printf("error decoding emotion evaluation response: %v", jsonErr)
+			if e, ok := jsonErr.(*json.SyntaxError); ok {
+				log.Printf("syntax error at byte offset %d", e.Offset)
+			}
+			log.Printf("watch response: %q", body)
+		}
+		return networkObj
+	}
+
+	/*
+		if(resCall == "bioSample"){
+			parsedResonss := NetworkObj{}
+		}else if(resCall == "emotionEval"){
+
+		}else if(resCall == "markEvent"){
+
+		}else if(resCall == "skill"){
+
+		}else if(resCall == "review"){
+
+		}*/
+
+}
+
 func (s *server) uploadEmotionEvaluationCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 
@@ -43,7 +88,7 @@ func (s *server) uploadEmotionEvaluationCall(config DatabaseConfigObj) http.Hand
 			log.Fatal(readErr)
 		}
 
-		parsedResonse := EmotionEvaluation{}
+		parsedResonse := EmotionEvaluationObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
@@ -57,7 +102,7 @@ func (s *server) uploadEmotionEvaluationCall(config DatabaseConfigObj) http.Hand
 		fmt.Println(parsedResonse.TiredEval)
 		fmt.Fprintf(w, "bio snapshot")
 
-		insertEmotionEvaluation(parsedResonse, config)
+		database.InsertEmotionEvaluationObj(parsedResonse, config)
 	}
 }
 func (s *server) uploadMarkEventCall(config DatabaseConfigObj) http.HandlerFunc {
@@ -72,7 +117,7 @@ func (s *server) uploadMarkEventCall(config DatabaseConfigObj) http.HandlerFunc 
 			log.Fatal(readErr)
 		}
 
-		parsedResonse := MarkEvent{}
+		parsedResonse := MarkEventObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
@@ -86,7 +131,7 @@ func (s *server) uploadMarkEventCall(config DatabaseConfigObj) http.HandlerFunc 
 		fmt.Println(parsedResonse.IsReaction)
 		fmt.Fprintf(w, "bio snapshot")
 
-		insertMarkEvent(parsedResonse, config)
+		database.InsertMarkEventObj(parsedResonse, config)
 	}
 }
 func (s *server) uploadBioSamplesCall(config DatabaseConfigObj) http.HandlerFunc {
@@ -101,7 +146,7 @@ func (s *server) uploadBioSamplesCall(config DatabaseConfigObj) http.HandlerFunc
 			log.Fatal(readErr)
 		}
 
-		parsedResonse := BioSamples{}
+		parsedResonse := BioSamplesObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
@@ -115,7 +160,7 @@ func (s *server) uploadBioSamplesCall(config DatabaseConfigObj) http.HandlerFunc
 		//fmt.Println(parsedResonse)
 		fmt.Fprintf(w, "bio snapshot")
 
-		insertBioSamples(parsedResonse, config)
+		database.InsertBioSamplesObj(parsedResonse, config)
 	}
 }
 
@@ -140,6 +185,7 @@ func (s *server) uploadSkillCall() http.HandlerFunc {
 		}
 
 		fmt.Println(parsedResonse.Url)
+		database.InsertSkillObj(parsedResonse, config)
 	}
 }
 
@@ -164,6 +210,7 @@ func (s *server) uploadReviewCall() http.HandlerFunc {
 		}
 
 		fmt.Println(parsedResonse.Url)
+		database.InsertReviewObj(parsedResonse, config)
 	}
 }
 
@@ -196,7 +243,7 @@ func main() {
 	s := server{
 		router: http.NewServeMux(),
 	}
-	s.routes(config.DatabaseConfig)
+	s.routes(config.DatabaseConfigObj)
 	log.Println("asd")
 	log.Fatal(http.ListenAndServe(":9000", s.router))
 
