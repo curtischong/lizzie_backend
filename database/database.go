@@ -5,7 +5,7 @@ import (
 	config "github.com/curtischong/lizzie_server/config"
 	network "github.com/curtischong/lizzie_server/network"
 	serverutuls "github.com/curtischong/lizzie_server/serverutils"
-	"github.com/influxdata/influxdb/client/v2"
+	influx "github.com/influxdata/influxdb/client/v2"
 	"log"
 	"strconv"
 	"time"
@@ -17,11 +17,13 @@ type MarkEventObj = network.MarkEventObj
 type SkillObj = network.SkillObj
 type ReviewObj = network.ReviewObj
 
-//type DatabaseConfigObj = database.DatabaseConfigObj
+type DatabaseConfigObj = config.DatabaseConfigObj
+
+//type Client = influx.Client
 
 // setupDB returns influxDB client
-func setupDB(config DatabaseConfigObj) Client {
-	c, err := client.NewHTTPClient(client.HTTPConfig{
+func setupDB(config DatabaseConfigObj) influx.Client {
+	c, err := influx.NewHTTPClient(influx.HTTPConfig{
 		Addr:     config.DBIP,
 		Username: config.Username,
 		Password: config.Password,
@@ -30,68 +32,65 @@ func setupDB(config DatabaseConfigObj) Client {
 		log.Fatal(err)
 	}
 	defer c.Close()
+	return c
 }
 
-func setupBP(c Client, config DatabaseConfigObj) BatchPoints {
-	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:  config.Dbname,
+func setupBP(c influx.Client, config DatabaseConfigObj) influx.BatchPoints {
+	bp, err := influx.NewBatchPoints(influx.BatchPointsConfig{
+		Database:  config.DBName,
 		Precision: "ms",
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
+	return bp
 }
 
 func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config DatabaseConfigObj) {
-	// Create a new HTTPClient
-	c = setupDB()
-	// Create a new point batch
-	bp = setupBP(c)
+	c := setupDB(config)
+	bp := setupBP(c, config)
 
 	fields := map[string]interface{}{
-		"timeStartFillingForm": sample.timeStartFillingForm,
-		"normalEval":           sample.normalEval,
-		"socialEval":           sample.socialEval,
-		"exhaustedEval":        sample.exhaustedEval,
-		"tiredEval":            sample.tiredEval,
-		"happyEval":            sample.happyEval,
-		"comments":             sample.comments,
+		"timeStartFillingForm": sample.TimeStartFillingForm,
+		"normalEval":           sample.NormalEval,
+		"socialEval":           sample.SocialEval,
+		"exhaustedEval":        sample.ExhaustedEval,
+		"tiredEval":            sample.TiredEval,
+		"happyEval":            sample.HappyEval,
+		"comments":             sample.Comments,
 	}
 
-	pt, err := client.NewPoint("emotionEvaluations", nil, fields, serverutuls.StringToDate(sample.timeEndFillingForm))
+	pt, err := influx.NewPoint("emotionEvaluations", nil, fields, serverutuls.StringToDate(sample.TimeEndFillingForm))
 	if err != nil {
 		log.Fatal(err)
 	}
-	bp.addpoint(pt)
+	bp.AddPoint(pt)
 
 	// write the batch
-	if err := c.write(bp); err != nil {
+	if err := c.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("added emotionevaluation!")
 
 	// close client resources
-	if err := c.close(); err != nil {
+	if err := c.Close(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-//TODO: udpate the type to MarkEventObj
 func InsertMarkEventObj(sample MarkEventObj, config DatabaseConfigObj) {
-	// Create a new HTTPClient
-	c = setupDB()
-	// Create a new point batch
-	bp = setupBP(c)
+	c := setupDB(config)
+	bp := setupBP(c, config)
 
 	var emotionRatings []int
 	err2 := json.Unmarshal([]byte(sample.EmotionsFelt), &emotionRatings)
-	if err != nil {
+	if err2 != nil {
 		log.Fatal(err2)
 	}
 
 	var typeBiometricsViewed []int
 	err3 := json.Unmarshal([]byte(sample.TypeBiometricsViewed), &typeBiometricsViewed)
-	if err != nil {
+	if err3 != nil {
 		log.Fatal(err3)
 	}
 
@@ -149,7 +148,7 @@ func InsertMarkEventObj(sample MarkEventObj, config DatabaseConfigObj) {
 		fields["anticipationStart"] = parsedAnticipationStart
 	}
 
-	pt, err := client.NewPoint("MarkEventObjs", nil, fields, time.Unix(0, int64(parsedTimeOfMark*1000000)))
+	pt, err := influx.NewPoint("MarkEventObjs", nil, fields, time.Unix(0, int64(parsedTimeOfMark*1000000)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -168,14 +167,12 @@ func InsertMarkEventObj(sample MarkEventObj, config DatabaseConfigObj) {
 }
 
 func InsertBioSamplesObj(sample BioSamplesObj, config DatabaseConfigObj) {
-	// Create a new HTTPClient
-	c = setupDB()
-	// Create a new point batch
-	bp = setupBP(c)
+	c := setupDB(config)
+	bp := setupBP(c, config)
 
 	var dataPointNames []string
 	err2 := json.Unmarshal([]byte(sample.DataPointNames), &dataPointNames)
-	if err != nil {
+	if err2 != nil {
 		log.Fatal(err2)
 	}
 
@@ -202,7 +199,7 @@ func InsertBioSamplesObj(sample BioSamplesObj, config DatabaseConfigObj) {
 			"measurement":   measurement,
 		}
 
-		pt, err := client.NewPoint("BioSamplesObj", nil, fields, time.Unix(0, int64(parsedEndTime*1000000)))
+		pt, err := influx.NewPoint("BioSamplesObj", nil, fields, time.Unix(0, int64(parsedEndTime*1000000)))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -222,71 +219,63 @@ func InsertBioSamplesObj(sample BioSamplesObj, config DatabaseConfigObj) {
 }
 
 func InsertSkillObj(sample SkillObj, config DatabaseConfigObj) {
-	// Create a new HTTPClient
-	c = setupDB()
-	// Create a new point batch
-	bp = setupBP(c)
+	c := setupDB(config)
+	bp := setupBP(c, config)
 
 	fields := map[string]interface{}{
-		"concept":                  sample.concept,
-		"newLearnings":             sample.newLearnings,
-		"oldSkills":                sample.oldSkills,
-		"percentNew":               sample.percentNew,
-		"timeLearned":              sample.timeLearned,
-		"timeSpentLearning":        sample.timeSpentLearning,
-		"scheduledReviews":         sample.scheduledReviews,
-		"scheduledReviewDurations": sample.scheduledReviewDurations,
-		"reviews":                  sample.reviews,
-		"reviewDurations":          sample.reviewDurations,
+		"concept":                  sample.Concept,
+		"newLearnings":             sample.NewLearnings,
+		"oldSkills":                sample.OldSkills,
+		"percentNew":               sample.PercentNew,
+		"timeSpentLearning":        sample.TimeSpentLearning,
+		"scheduledReviews":         sample.ScheduledReviews,
+		"scheduledReviewDurations": sample.ScheduledReviewDurations,
+		"reviews":                  sample.Reviews,
+		"reviewDurations":          sample.ReviewDurations,
 	}
 
-	pt, err := client.NewPoint("emotionEvaluations", nil, fields, serverutuls.StringToDate(sample.timeEndFillingForm))
+	pt, err := influx.NewPoint("learnedSkills", nil, fields, serverutuls.StringToDate(sample.TimeLearned))
 	if err != nil {
 		log.Fatal(err)
 	}
-	bp.addpoint(pt)
+	bp.AddPoint(pt)
 
 	// write the batch
-	if err := c.write(bp); err != nil {
+	if err := c.Write(bp); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("added emotionevaluation!")
+	log.Printf("added learnedSkill!")
 
 	// close client resources
-	if err := c.close(); err != nil {
+	if err := c.Close(); err != nil {
 		log.Fatal(err)
 	}
 }
 func InsertReviewObj(sample ReviewObj, config DatabaseConfigObj) {
-	// Create a new HTTPClient
-	c = setupDB()
-	// Create a new point batch
-	bp = setupBP(c)
+	c := setupDB(config)
+	bp := setupBP(c, config)
 
 	fields := map[string]interface{}{
-		"timeStartFillingForm": sample.timeStartFillingForm,
-		"normalEval":           sample.normalEval,
-		"socialEval":           sample.socialEval,
-		"exhaustedEval":        sample.exhaustedEval,
-		"tiredEval":            sample.tiredEval,
-		"happyEval":            sample.happyEval,
-		"comments":             sample.comments,
+		"concept":        sample.Concept,
+		"dateReviewed":   sample.DateReviewed,
+		"newLearnings":   sample.NewLearnings,
+		"reviewDuration": sample.ReviewDuration,
 	}
 
-	pt, err := client.NewPoint("emotionEvaluations", nil, fields, serverutuls.StringToDate(sample.timeEndFillingForm))
+	pt, err := influx.NewPoint("skillReviews", nil, fields, serverutuls.StringToDate(sample.TimeLearned))
 	if err != nil {
 		log.Fatal(err)
 	}
-	bp.addpoint(pt)
+	bp.AddPoint(pt)
 
 	// write the batch
-	if err := c.write(bp); err != nil {
+	if err := c.Write(bp); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("added emotionevaluation!")
+	log.Printf("added SkillReview!")
 
 	// close client resources
-	if err := c.close(); err != nil {
+	if err := c.Close(); err != nil {
 		log.Fatal(err)
 	}
 }
