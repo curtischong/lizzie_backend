@@ -24,6 +24,7 @@ type BioSamplesObj = network.BioSamplesObj
 type MarkEventObj = network.MarkEventObj
 type SkillObj = network.SkillObj
 type ReviewObj = network.ReviewObj
+type ScheduledReviewObj = network.ScheduledReviewObj
 
 // Watch
 func (s server) routes(config DatabaseConfigObj) {
@@ -33,22 +34,27 @@ func (s server) routes(config DatabaseConfigObj) {
 	s.router.HandleFunc("/upload_mark_event", s.uploadMarkEventCall(config))
 	s.router.HandleFunc("/upload_skill", s.uploadSkillCall(config))
 	s.router.HandleFunc("/upload_review", s.uploadReviewCall(config))
+	s.router.HandleFunc("/upload_scheduled_review", s.uploadScheduledReviewCall(config))
 	//s.router.HandleFunc("/admin", s.adminOnly(s.handleAdminIndex()))
+}
+
+func getResponseBody(w http.ResponseWriter, response *http.Request) []byte {
+	if response.Body == nil {
+		http.Error(w, "Please send a request body", 400)
+		return nil
+	}
+	body, readErr := ioutil.ReadAll(response.Body)
+	if readErr != nil {
+		log.Println("failed here")
+		log.Fatal(readErr)
+	}
+	return body
 }
 
 func uploadBioSamplesCall(w http.ResponseWriter, response *http.Request, resCall string) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, response *http.Request) {
-		if response.Body == nil {
-			http.Error(w, "Please send a request body", 400)
-			return
-		}
-		body, readErr := ioutil.ReadAll(response.Body)
-		if readErr != nil {
-			log.Println("failed here")
-			log.Fatal(readErr)
-		}
-
+		body := getResponseBody(w, response)
 		parsedResonse := EmotionEvaluationObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
@@ -78,17 +84,7 @@ func uploadBioSamplesCall(w http.ResponseWriter, response *http.Request, resCall
 
 func (s *server) uploadEmotionEvaluationCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
-
-		if response.Body == nil {
-			http.Error(w, "Please send a request body", 400)
-			return
-		}
-		body, readErr := ioutil.ReadAll(response.Body)
-		if readErr != nil {
-			log.Println("failed here")
-			log.Fatal(readErr)
-		}
-
+		body := getResponseBody(w, response)
 		parsedResonse := EmotionEvaluationObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
@@ -106,18 +102,10 @@ func (s *server) uploadEmotionEvaluationCall(config DatabaseConfigObj) http.Hand
 		database.InsertEmotionEvaluationObj(parsedResonse, config)
 	}
 }
+
 func (s *server) uploadMarkEventCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
-		if response.Body == nil {
-			http.Error(w, "Please send a request body", 400)
-			return
-		}
-		body, readErr := ioutil.ReadAll(response.Body)
-		if readErr != nil {
-			log.Println("failed here")
-			log.Fatal(readErr)
-		}
-
+		body := getResponseBody(w, response)
 		parsedResonse := MarkEventObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
@@ -137,16 +125,7 @@ func (s *server) uploadMarkEventCall(config DatabaseConfigObj) http.HandlerFunc 
 }
 func (s *server) uploadBioSamplesCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
-		if response.Body == nil {
-			http.Error(w, "Please send a request body", 400)
-			return
-		}
-		body, readErr := ioutil.ReadAll(response.Body)
-		if readErr != nil {
-			log.Println("failed here")
-			log.Fatal(readErr)
-		}
-
+		body := getResponseBody(w, response)
 		parsedResonse := BioSamplesObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
@@ -167,16 +146,7 @@ func (s *server) uploadBioSamplesCall(config DatabaseConfigObj) http.HandlerFunc
 
 func (s *server) uploadSkillCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
-		if response.Body == nil {
-			http.Error(w, "Please send a request body", 400)
-			return
-		}
-		body, readErr := ioutil.ReadAll(response.Body)
-		if readErr != nil {
-			log.Println("failed here")
-			log.Fatal(readErr)
-		}
-
+		body := getResponseBody(w, response)
 		parsedResonse := SkillObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
@@ -192,16 +162,7 @@ func (s *server) uploadSkillCall(config DatabaseConfigObj) http.HandlerFunc {
 
 func (s *server) uploadReviewCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
-		if response.Body == nil {
-			http.Error(w, "Please send a request body", 400)
-			return
-		}
-		body, readErr := ioutil.ReadAll(response.Body)
-		if readErr != nil {
-			log.Println("failed here")
-			log.Fatal(readErr)
-		}
-
+		body := getResponseBody(w, response)
 		parsedResonse := ReviewObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
@@ -215,18 +176,24 @@ func (s *server) uploadReviewCall(config DatabaseConfigObj) http.HandlerFunc {
 	}
 }
 
-func (s *server) typerSentFieldCall() http.HandlerFunc {
+func (s *server) uploadScheduledReviewCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
-		if response.Body == nil {
-			http.Error(w, "Please send a request body", 400)
-			return
-		}
-		body, readErr := ioutil.ReadAll(response.Body)
-		if readErr != nil {
-			log.Println("failed here")
-			log.Fatal(readErr)
+		body := getResponseBody(w, response)
+		parsedResonse := ScheduledReviewObj{}
+		jsonErr := json.Unmarshal(body, &parsedResonse)
+		if jsonErr != nil {
+			log.Println(body)
+			log.Println("died here")
+			log.Fatal(jsonErr)
 		}
 
+		fmt.Println(parsedResonse)
+		database.InsertScheduledReviewObj(parsedResonse, config)
+	}
+}
+func (s *server) typerSentFieldCall() http.HandlerFunc {
+	return func(w http.ResponseWriter, response *http.Request) {
+		body := getResponseBody(w, response)
 		parsedResonse := typerworker.SentField{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {

@@ -36,16 +36,12 @@ type MarkEventObj struct {
 
 // SkillObj describes a received Skill
 type SkillObj struct {
-	Concept                  string `json:"concept"`
-	NewLearnings             string `json:"newLearnings"`
-	OldSkills                string `json:"oldSkills"`
-	PercentNew               string `json:"percentNew"`
-	TimeLearned              string `json:"timeLearned"`
-	TimeSpentLearning        string `json:"timeSpentLearning"`
-	ScheduledReviews         string `json:"scheduledReviews"`
-	ScheduledReviewDurations string `json:"scheduledReviewDurations"`
-	Reviews                  string `json:"reviews"`
-	ReviewDurations          string `json:"reviewDurations"`
+	Concept           string `json:"concept"`
+	NewLearnings      string `json:"newLearnings"`
+	OldSkills         string `json:"oldSkills"`
+	PercentNew        string `json:"percentNew"`
+	TimeLearned       string `json:"timeLearned"`
+	TimeSpentLearning string `json:"timeSpentLearning"`
 }
 
 // ReviewObj describes a received Review
@@ -55,4 +51,12 @@ type ReviewObj struct {
 	NewLearnings   string `json:"newLearnings"`
 	ReviewDuration string `json:"reviewDuration"`
 	TimeLearned    string `json:"timeLearned"`
+}
+
+// ScheduledReviewObj describes a received scheduledReview
+type ScheduledReviewObj struct {
+	Concept           string `json:"concept"`
+	TimeLearned       string `json:"timeLearned"`
+	ScheduledDate     string `json:"scheduledDate"`
+	ScheduledDuration string `json:"scheduledDuration"`
 }

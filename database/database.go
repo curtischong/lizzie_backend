@@ -16,6 +16,7 @@ type BioSamplesObj = network.BioSamplesObj
 type MarkEventObj = network.MarkEventObj
 type SkillObj = network.SkillObj
 type ReviewObj = network.ReviewObj
+type ScheduledReviewObj = network.ScheduledReviewObj
 
 type DatabaseConfigObj = config.DatabaseConfigObj
 
@@ -222,19 +223,19 @@ func InsertSkillObj(sample SkillObj, config DatabaseConfigObj) {
 	c := setupDB(config)
 	bp := setupBP(c, config)
 
+	parsedPercentNew, err := strconv.ParseInt(sample.PercentNew, 10, 64)
+	parsedTimeSpentLearning, err := strconv.ParseInt(sample.TimeSpentLearning, 10, 64)
+	parsedTimeLearned, err := strconv.ParseFloat(sample.TimeLearned, 64)
+
 	fields := map[string]interface{}{
-		"concept":                  sample.Concept,
-		"newLearnings":             sample.NewLearnings,
-		"oldSkills":                sample.OldSkills,
-		"percentNew":               sample.PercentNew,
-		"timeSpentLearning":        sample.TimeSpentLearning,
-		"scheduledReviews":         sample.ScheduledReviews,
-		"scheduledReviewDurations": sample.ScheduledReviewDurations,
-		"reviews":                  sample.Reviews,
-		"reviewDurations":          sample.ReviewDurations,
+		"concept":           sample.Concept,
+		"newLearnings":      sample.NewLearnings,
+		"oldSkills":         sample.OldSkills,
+		"percentNew":        parsedPercentNew,
+		"timeSpentLearning": parsedTimeSpentLearning,
 	}
 
-	pt, err := influx.NewPoint("learnedSkills", nil, fields, serverutils.StringToDate(sample.TimeLearned))
+	pt, err := influx.NewPoint("learnedSkills", nil, fields, time.Unix(0, int64(parsedTimeLearned*1000000)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -251,18 +252,56 @@ func InsertSkillObj(sample SkillObj, config DatabaseConfigObj) {
 		log.Fatal(err)
 	}
 }
+
 func InsertReviewObj(sample ReviewObj, config DatabaseConfigObj) {
 	c := setupDB(config)
 	bp := setupBP(c, config)
 
+	parsedDateReviewed, err := strconv.ParseFloat(sample.DateReviewed, 64)
+	parsedReviewDuration, err := strconv.ParseInt(sample.ReviewDuration, 10, 64)
+	parsedTimeLearned, err := strconv.ParseFloat(sample.TimeLearned, 64)
+
 	fields := map[string]interface{}{
 		"concept":        sample.Concept,
-		"dateReviewed":   sample.DateReviewed,
+		"dateReviewed":   parsedDateReviewed,
 		"newLearnings":   sample.NewLearnings,
-		"reviewDuration": sample.ReviewDuration,
+		"reviewDuration": parsedReviewDuration,
 	}
 
-	pt, err := influx.NewPoint("skillReviews", nil, fields, serverutils.StringToDate(sample.TimeLearned))
+	pt, err := influx.NewPoint("skillReviews", nil, fields, time.Unix(0, int64(parsedTimeLearned*1000000)))
+	if err != nil {
+		log.Fatal(err)
+	}
+	bp.AddPoint(pt)
+
+	// write the batch
+	if err := c.Write(bp); err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("added SkillReview!")
+
+	// close client resources
+	if err := c.Close(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func InsertScheduledReviewObj(sample ScheduledReviewObj, config DatabaseConfigObj) {
+	c := setupDB(config)
+	bp := setupBP(c, config)
+
+	parsedScheduledDate, err := strconv.ParseFloat(sample.ScheduledDate, 64)
+	parsedScheduledDuration, err := strconv.ParseInt(sample.ScheduledDuration, 10, 64)
+	parsedTimeLearned, err := strconv.ParseFloat(sample.TimeLearned, 64)
+
+	fields := map[string]interface{}{
+		"concept":           sample.Concept,
+		"timeLearned":       parsedTimeLearned,
+		"scheduledDate":     parsedScheduledDate,
+		"scheduledDuration": parsedScheduledDuration,
+	}
+
+	pt, err := influx.NewPoint("scheduledReviews", nil, fields, time.Unix(0, int64(parsedTimeLearned*1000000)))
 	if err != nil {
 		log.Fatal(err)
 	}
