@@ -22,6 +22,8 @@ type DatabaseConfigObj = database.DatabaseConfigObj
 type EmotionEvaluationObj = network.EmotionEvaluationObj
 type BioSamplesObj = network.BioSamplesObj
 type MarkEventObj = network.MarkEventObj
+type SkillObj = network.SkillObj
+type ReviewObj = network.ReviewObj
 
 // Watch
 func (s server) routes(config DatabaseConfigObj) {
@@ -57,7 +59,6 @@ func uploadBioSamplesCall(w http.ResponseWriter, response *http.Request, resCall
 			}
 			log.Printf("watch response: %q", body)
 		}
-		return networkObj
 	}
 
 	/*
@@ -164,7 +165,7 @@ func (s *server) uploadBioSamplesCall(config DatabaseConfigObj) http.HandlerFunc
 	}
 }
 
-func (s *server) uploadSkillCall() http.HandlerFunc {
+func (s *server) uploadSkillCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		if response.Body == nil {
 			http.Error(w, "Please send a request body", 400)
@@ -176,7 +177,7 @@ func (s *server) uploadSkillCall() http.HandlerFunc {
 			log.Fatal(readErr)
 		}
 
-		parsedResonse := typerworker.SentField{}
+		parsedResonse := SkillObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
@@ -184,12 +185,12 @@ func (s *server) uploadSkillCall() http.HandlerFunc {
 			log.Fatal(jsonErr)
 		}
 
-		fmt.Println(parsedResonse.Url)
+		fmt.Println(parsedResonse)
 		database.InsertSkillObj(parsedResonse, config)
 	}
 }
 
-func (s *server) uploadReviewCall() http.HandlerFunc {
+func (s *server) uploadReviewCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		if response.Body == nil {
 			http.Error(w, "Please send a request body", 400)
@@ -201,7 +202,7 @@ func (s *server) uploadReviewCall() http.HandlerFunc {
 			log.Fatal(readErr)
 		}
 
-		parsedResonse := typerworker.SentField{}
+		parsedResonse := ReviewObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
@@ -209,7 +210,7 @@ func (s *server) uploadReviewCall() http.HandlerFunc {
 			log.Fatal(jsonErr)
 		}
 
-		fmt.Println(parsedResonse.Url)
+		fmt.Println(parsedResonse)
 		database.InsertReviewObj(parsedResonse, config)
 	}
 }
