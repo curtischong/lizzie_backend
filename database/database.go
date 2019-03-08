@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	config "github.com/curtischong/lizzie_server/config"
 	network "github.com/curtischong/lizzie_server/network"
-	serverutils "github.com/curtischong/lizzie_server/serverutils"
+	serverutils "github.com/curtischong/lizzie_server/serverUtils"
 	influx "github.com/influxdata/influxdb/client/v2"
 	"log"
 	"strconv"

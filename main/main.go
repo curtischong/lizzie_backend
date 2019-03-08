@@ -240,7 +240,7 @@ func (s *server) typerSentFieldCall() http.HandlerFunc {
 }
 
 func main() {
-	config := config.LoadConfiguration("../config/server_config.json")
+	config := config.LoadConfiguration("../configSecrets/server_config.json")
 	s := server{
 		router: http.NewServeMux(),
 	}
