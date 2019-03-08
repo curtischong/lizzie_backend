@@ -311,7 +311,7 @@ func InsertScheduledReviewObj(sample ScheduledReviewObj, config DatabaseConfigOb
 	if err := c.Write(bp); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("added SkillReview!")
+	log.Printf("added ScheduledSkillReview!")
 
 	// close client resources
 	if err := c.Close(); err != nil {
