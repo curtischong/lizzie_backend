@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	config "github.com/curtischong/lizzie_server/config"
 	network "github.com/curtischong/lizzie_server/network"
-	serverutuls "github.com/curtischong/lizzie_server/serverutils"
+	serverutils "github.com/curtischong/lizzie_server/serverutils"
 	influx "github.com/influxdata/influxdb/client/v2"
 	"log"
 	"strconv"
@@ -60,7 +60,7 @@ func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config DatabaseConf
 		"comments":             sample.Comments,
 	}
 
-	pt, err := influx.NewPoint("emotionEvaluations", nil, fields, serverutuls.StringToDate(sample.TimeEndFillingForm))
+	pt, err := influx.NewPoint("emotionEvaluations", nil, fields, serverutils.StringToDate(sample.TimeEndFillingForm))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -234,7 +234,7 @@ func InsertSkillObj(sample SkillObj, config DatabaseConfigObj) {
 		"reviewDurations":          sample.ReviewDurations,
 	}
 
-	pt, err := influx.NewPoint("learnedSkills", nil, fields, serverutuls.StringToDate(sample.TimeLearned))
+	pt, err := influx.NewPoint("learnedSkills", nil, fields, serverutils.StringToDate(sample.TimeLearned))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -262,7 +262,7 @@ func InsertReviewObj(sample ReviewObj, config DatabaseConfigObj) {
 		"reviewDuration": sample.ReviewDuration,
 	}
 
-	pt, err := influx.NewPoint("skillReviews", nil, fields, serverutuls.StringToDate(sample.TimeLearned))
+	pt, err := influx.NewPoint("skillReviews", nil, fields, serverutils.StringToDate(sample.TimeLearned))
 	if err != nil {
 		log.Fatal(err)
 	}
