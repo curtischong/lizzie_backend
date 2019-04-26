@@ -52,13 +52,12 @@ func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config DatabaseConf
 	bp := setupBP(c, config)
 
 	fields := map[string]interface{}{
-		"timeStartFillingForm": sample.TimeStartFillingForm,
-		"normalEval":           sample.NormalEval,
-		"socialEval":           sample.SocialEval,
-		"exhaustedEval":        sample.ExhaustedEval,
-		"tiredEval":            sample.TiredEval,
-		"happyEval":            sample.HappyEval,
-		"comments":             sample.Comments,
+		"accomplishedEval": sample.AccomplishedEval,
+		"socialEval":       sample.SocialEval,
+		"exhaustedEval":    sample.ExhaustedEval,
+		"tiredEval":        sample.TiredEval,
+		"happyEval":        sample.HappyEval,
+		"comments":         sample.Comments,
 	}
 
 	pt, err := influx.NewPoint("emotionEvaluations", nil, fields, serverutils.StringToDate(sample.TimeEndFillingForm))
@@ -100,15 +99,6 @@ func InsertMarkEventObj(sample MarkEventObj, config DatabaseConfigObj) {
 		log.Fatal(err)
 	}
 
-	parsedTimeStartFillingForm, err := strconv.ParseFloat(sample.TimeStartFillingForm, 64)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	parsedTimeEndFillingForm, err := strconv.ParseFloat(sample.TimeEndFillingForm, 64)
-	if err != nil {
-		log.Fatal(err)
-	}
 	parsedIsReaction, err := strconv.Atoi(sample.IsReaction)
 	if err != nil {
 		log.Fatal(err)
@@ -128,8 +118,6 @@ func InsertMarkEventObj(sample MarkEventObj, config DatabaseConfigObj) {
 	}
 
 	fields := map[string]interface{}{
-		"timeStartFillingForm": parsedTimeStartFillingForm,
-		"timeEndFillingForm":   parsedTimeEndFillingForm,
 		"isReaction":           parsedIsReaction,
 		"timeOfEvent":          parsedTimeOfEvent,
 		"reactionEnd":          parsedReactionEnd,

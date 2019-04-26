@@ -10,20 +10,17 @@ type BioSamplesObj struct {
 
 // EmotionEvaluationObj describes a received EmotionEvaluation
 type EmotionEvaluationObj struct {
-	TimeStartFillingForm string `json:"timeStartFillingForm"`
-	TimeEndFillingForm   string `json:"timeEndFillingForm"`
-	NormalEval           string `json:"normalEval"`
-	SocialEval           string `json:"socialEval"`
-	ExhaustedEval        string `json:"exhaustedEval"`
-	TiredEval            string `json:"tiredEval"`
-	HappyEval            string `json:"happyEval"`
-	Comments             string `json:"comments"`
+	TimeEndFillingForm string `json:"timeEndFillingForm"`
+	AccomplishedEval   string `json:"accomplishedEval"`
+	SocialEval         string `json:"socialEval"`
+	ExhaustedEval      string `json:"exhaustedEval"`
+	TiredEval          string `json:"tiredEval"`
+	HappyEval          string `json:"happyEval"`
+	Comments           string `json:"comments"`
 }
 
 // MarkEventObj describes a received MarkEvent
 type MarkEventObj struct {
-	TimeStartFillingForm string `json:"timeStartFillingForm"`
-	TimeEndFillingForm   string `json:"timeEndFillingForm"`
 	TimeOfMark           string `json:"timeOfMark"`
 	IsReaction           string `json:"isReaction"`
 	AnticipationStart    string `json:"anticipationStart"`
