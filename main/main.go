@@ -20,6 +20,7 @@ type server struct {
 
 type DatabaseConfigObj = database.DatabaseConfigObj
 type EmotionEvaluationObj = network.EmotionEvaluationObj
+type EmotionEvaluationNetworkObj = network.EmotionEvaluationNetworkObj
 type BioSamplesObj = network.BioSamplesObj
 type MarkEventObj = network.MarkEventObj
 type SkillObj = network.SkillObj
@@ -55,7 +56,7 @@ func uploadBioSamplesCall(w http.ResponseWriter, response *http.Request, resCall
 
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
-		parsedResonse := EmotionEvaluationObj{}
+		parsedResonse := BioSamplesObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
@@ -66,7 +67,6 @@ func uploadBioSamplesCall(w http.ResponseWriter, response *http.Request, resCall
 			log.Printf("watch response: %q", body)
 		}
 	}
-
 	/*
 		if(resCall == "bioSample"){
 			parsedResonss := NetworkObj{}
@@ -85,7 +85,7 @@ func uploadBioSamplesCall(w http.ResponseWriter, response *http.Request, resCall
 func (s *server) uploadEmotionEvaluationCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
-		parsedResonse := EmotionEvaluationObj{}
+		parsedResonse := EmotionEvaluationNetworkObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
@@ -96,10 +96,16 @@ func (s *server) uploadEmotionEvaluationCall(config DatabaseConfigObj) http.Hand
 			log.Printf("watch response: %q", body)
 		}
 
-		fmt.Println(parsedResonse.TiredEval)
-		fmt.Fprintf(w, "bio snapshot")
+		sliders := parsedResonse.EvalSliders
+		for i := 0; i < len(sliders); i++ {
+			println(i, sliders[i])
+		}
 
-		database.InsertEmotionEvaluationObj(parsedResonse, config)
+		resObj := EmotionEvaluationObj{}
+
+		//fmt.Println(parsedResonse.TiredEval)
+
+		database.InsertEmotionEvaluationObj(resObj, config)
 	}
 }
 
@@ -118,7 +124,6 @@ func (s *server) uploadMarkEventCall(config DatabaseConfigObj) http.HandlerFunc 
 		}
 
 		fmt.Println(parsedResonse.IsReaction)
-		fmt.Fprintf(w, "bio snapshot")
 
 		database.InsertMarkEventObj(parsedResonse, config)
 	}
@@ -212,7 +217,7 @@ func main() {
 		router: http.NewServeMux(),
 	}
 	s.routes(config.DatabaseConfigObj)
-	log.Println("asd")
-	log.Fatal(http.ListenAndServe(":9000", s.router))
+	log.Println("serving on port: " + config.ServerConfigObj.Port)
+	log.Fatal(http.ListenAndServe(":"+config.ServerConfigObj.Port, s.router))
 
 }
