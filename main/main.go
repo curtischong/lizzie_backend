@@ -213,6 +213,7 @@ func (s *server) messengerSentFieldCall(config ConfigObj, db DBObj) http.Handler
 
 func main() {
 	config := config.LoadConfiguration("../configSecrets/server_config.json")
+	fmt.Printf("IsDev: %t \n", config.ServerConfig.IsDev)
 	s := server{
 		router: http.NewServeMux(),
 	}
@@ -220,7 +221,7 @@ func main() {
 	db := database.SetupDB(config)
 
 	s.routes(config, db)
-	log.Println("serving on port: " + config.ServerConfig.Port)
+	fmt.Printf("serving on port: %s", config.ServerConfig.Port)
 	log.Fatal(http.ListenAndServe(":"+config.ServerConfig.Port, s.router))
 
 	// write a case to close this connection

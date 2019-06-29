@@ -2,6 +2,7 @@ package database
 
 import (
 	"encoding/json"
+	"fmt"
 	config "github.com/curtischong/lizzie_server/config"
 	network "github.com/curtischong/lizzie_server/network"
 	serverutils "github.com/curtischong/lizzie_server/serverUtils"
@@ -49,7 +50,7 @@ func connectDB(config ConfigObj, db *DBObj) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Connected to DB at ip: %s", dbip)
+	fmt.Printf("Connected to DB at ip: %s\n", dbip)
 	db.DBClient = c
 }
 

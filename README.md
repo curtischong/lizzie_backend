@@ -15,6 +15,8 @@
    - DO NOT copy the config variable into an object's own config.
       - you don't know which version of the config to trust
       - if you also pass in a config variable you are passing two of the same config
+- Use `flt.printf("stuff %v\n", var)` to print dev-assigned variables
+- Use `log.println(err)` to print general logs
 - Try to use this style to create objects:
 ```
 dbObj := DBObj{
