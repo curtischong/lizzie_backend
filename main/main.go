@@ -8,7 +8,6 @@ import (
 	config "github.com/curtischong/lizzie_server/config"
 	database "github.com/curtischong/lizzie_server/database"
 	network "github.com/curtischong/lizzie_server/network"
-	typerworker "github.com/curtischong/lizzie_server/typerworker"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -26,10 +25,12 @@ type MarkEventObj = network.MarkEventObj
 type SkillObj = network.SkillObj
 type ReviewObj = network.ReviewObj
 type ScheduledReviewObj = network.ScheduledReviewObj
+type TyperObj = network.TyperObj
 
 // Watch
 func (s server) routes(config DatabaseConfigObj) {
 	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall())
+	s.router.HandleFunc("/messenger_sent_field", s.messengerSentFieldCall())
 	s.router.HandleFunc("/upload_bio_samples", s.uploadBioSamplesCall(config))
 	s.router.HandleFunc("/upload_emotion_evaluation", s.uploadEmotionEvaluationCall(config))
 	s.router.HandleFunc("/upload_mark_event", s.uploadMarkEventCall(config))
@@ -196,18 +197,42 @@ func (s *server) uploadScheduledReviewCall(config DatabaseConfigObj) http.Handle
 		database.InsertScheduledReviewObj(parsedResonse, config)
 	}
 }
+
 func (s *server) typerSentFieldCall() http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
-		parsedResonse := typerworker.SentField{}
+		// NOTE: do not remove this line. Very good to debug incorrect encoding types from client
+		// I thought the ajax was encoded in JSON but I didn't JSON.stringify it so it was urlencoding instead
+		// fmt.Println(string(body))
+		parsedResonse := TyperObj{}
+		// NOTE: json.Unmarshal only works for json-encoded data
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
 			log.Println("died here")
 			log.Fatal(jsonErr)
 		}
+		fmt.Println(parsedResonse)
+		database.InsertTyperObj(parsedResonse, config)
+	}
+}
 
-		fmt.Println(parsedResonse.Url)
+func (s *server) messengerSentFieldCall() http.HandlerFunc {
+	return func(w http.ResponseWriter, response *http.Request) {
+		body := getResponseBody(w, response)
+		// NOTE: do not remove this line. Very good to debug incorrect encoding types from client
+		// I thought the ajax was encoded in JSON but I didn't JSON.stringify it so it was urlencoding instead
+		// fmt.Println(string(body))
+		parsedResonse := MessengerObj{}
+		// NOTE: json.Unmarshal only works for json-encoded data
+		jsonErr := json.Unmarshal(body, &parsedResonse)
+		if jsonErr != nil {
+			log.Println(body)
+			log.Println("died here")
+			log.Fatal(jsonErr)
+		}
+		fmt.Println(parsedResonse)
+		database.InsertTyperObj(parsedResonse, config)
 	}
 }
 
