@@ -1,7 +1,7 @@
 package config
 
 // DatabaseConfigObj Config for InfluxDB
-type DatabaseConfigObj struct {
+type DBConfigObj struct {
 	DBName   string `json:"dbname"`
 	Username string `json:"username"`
 	Password string `json:"password"`

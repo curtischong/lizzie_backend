@@ -20,13 +20,13 @@ type ScheduledReviewObj = network.ScheduledReviewObj
 type TyperObj = network.TyperObj
 type MessengerObj = network.MessengerObj
 
-type DatabaseConfigObj = config.DatabaseConfigObj
+type DBConfigObj = config.DBConfigObj
 
 //type Client = influx.Client
 
-// setupDB returns influxDB client
-func setupDB(config DatabaseConfigObj) influx.Client {
+func connectDB(dbObj *DBObj) {
 	var dbip string
+	var config = dbObj.DBConfig
 	if config.IsDev {
 		dbip = config.DevDBIP
 	} else {
@@ -37,18 +37,23 @@ func setupDB(config DatabaseConfigObj) influx.Client {
 		Username: config.Username,
 		Password: config.Password,
 	})
-	defer c.Close()
 
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Connected to Database!")
-	return c
+	log.Printf("Connected to DB!")
+	dbObj.DBClient = c
 }
 
-func setupBP(c influx.Client, config DatabaseConfigObj) influx.BatchPoints {
+func disconnectDB(dbObj *DBObj) {
+	if err := dbObj.DBClient.Close(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func setupBP(config DBConfigObj) influx.BatchPoints {
 	bp, err := influx.NewBatchPoints(influx.BatchPointsConfig{
-		Database:  config.DBName,
+		DB:        config.DBName,
 		Precision: "ms",
 	})
 	if err != nil {
@@ -57,9 +62,10 @@ func setupBP(c influx.Client, config DatabaseConfigObj) influx.BatchPoints {
 	return bp
 }
 
-func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config DatabaseConfigObj) {
-	c := setupDB(config)
-	bp := setupBP(c, config)
+func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, dbObj DBObj) {
+	connectDB(&dbObj)
+	defer disconnectDB(&dbObj)
+	bp := setupBP(dbObj.DBConfig)
 
 	fields := map[string]interface{}{
 		"accomplished_eval": sample.AccomplishedEval,
@@ -77,20 +83,16 @@ func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config DatabaseConf
 	bp.AddPoint(pt)
 
 	// write the batch
-	if err := c.Write(bp); err != nil {
+	if err := dbObj.DBClient.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("added emotionevaluation!")
-
-	// close client resources
-	if err := c.Close(); err != nil {
-		log.Fatal(err)
-	}
 }
 
-func InsertMarkEventObj(sample MarkEventObj, config DatabaseConfigObj) {
-	c := setupDB(config)
-	bp := setupBP(c, config)
+func InsertMarkEventObj(sample MarkEventObj, dbObj DBObj) {
+	connectDB(&dbObj)
+	defer disconnectDB(&dbObj)
+	bp := setupBP(dbObj.DBConfig)
 
 	var emotionRatings []int
 	err2 := json.Unmarshal([]byte(sample.EmotionsFelt), &emotionRatings)
@@ -158,16 +160,12 @@ func InsertMarkEventObj(sample MarkEventObj, config DatabaseConfigObj) {
 		log.Fatal(err)
 	}
 	log.Printf("added MarkEventObj!")
-
-	// Close client resources
-	if err := c.Close(); err != nil {
-		log.Fatal(err)
-	}
 }
 
-func InsertBioSamplesObj(sample BioSamplesObj, config DatabaseConfigObj) {
-	c := setupDB(config)
-	bp := setupBP(c, config)
+func InsertBioSamplesObj(sample BioSamplesObj, dbObj DBObj) {
+	connectDB(&dbObj)
+	defer disconnectDB(&dbObj)
+	bp := setupBP(dbObj.DBConfig)
 
 	var dataPointNames []string
 	err2 := json.Unmarshal([]byte(sample.DataPointNames), &dataPointNames)
@@ -210,16 +208,12 @@ func InsertBioSamplesObj(sample BioSamplesObj, config DatabaseConfigObj) {
 		log.Fatal(err)
 	}
 	log.Printf("added BioSamplesObj!")
-
-	// Close client resources
-	if err := c.Close(); err != nil {
-		log.Fatal(err)
-	}
 }
 
-func InsertSkillObj(sample SkillObj, config DatabaseConfigObj) {
-	c := setupDB(config)
-	bp := setupBP(c, config)
+func InsertSkillObj(sample SkillObj, dbObj DBObj) {
+	connectDB(&dbObj)
+	defer disconnectDB(&dbObj)
+	bp := setupBP(dbObj.DBConfig)
 
 	parsedPercentNew, err := strconv.ParseInt(sample.PercentNew, 10, 64)
 	parsedTimeSpentLearning, err := strconv.ParseInt(sample.TimeSpentLearning, 10, 64)
@@ -244,16 +238,12 @@ func InsertSkillObj(sample SkillObj, config DatabaseConfigObj) {
 		log.Fatal(err)
 	}
 	log.Printf("added learnedSkill!")
-
-	// close client resources
-	if err := c.Close(); err != nil {
-		log.Fatal(err)
-	}
 }
 
-func InsertReviewObj(sample ReviewObj, config DatabaseConfigObj) {
-	c := setupDB(config)
-	bp := setupBP(c, config)
+func InsertReviewObj(sample ReviewObj, dbObj DBObj) {
+	connectDB(&dbObj)
+	defer disconnectDB(&dbObj)
+	bp := setupBP(dbObj.DBConfig)
 
 	parsedDateReviewed, err := strconv.ParseFloat(sample.DateReviewed, 64)
 	parsedReviewDuration, err := strconv.ParseInt(sample.ReviewDuration, 10, 64)
@@ -277,16 +267,12 @@ func InsertReviewObj(sample ReviewObj, config DatabaseConfigObj) {
 		log.Fatal(err)
 	}
 	log.Printf("added SkillReview!")
-
-	// close client resources
-	if err := c.Close(); err != nil {
-		log.Fatal(err)
-	}
 }
 
-func InsertScheduledReviewObj(sample ScheduledReviewObj, config DatabaseConfigObj) {
-	c := setupDB(config)
-	bp := setupBP(c, config)
+func InsertScheduledReviewObj(sample ScheduledReviewObj, dbObj DBObj) {
+	connectDB(&dbObj)
+	defer disconnectDB(&dbObj)
+	bp := setupBP(dbObj.DBConfig)
 
 	parsedScheduledDate, err := strconv.ParseFloat(sample.ScheduledDate, 64)
 	parsedScheduledDuration, err := strconv.ParseInt(sample.ScheduledDuration, 10, 64)
@@ -310,16 +296,12 @@ func InsertScheduledReviewObj(sample ScheduledReviewObj, config DatabaseConfigOb
 		log.Fatal(err)
 	}
 	log.Printf("added ScheduledSkillReview!")
-
-	// close client resources
-	if err := c.Close(); err != nil {
-		log.Fatal(err)
-	}
 }
 
-func InsertTyperObj(sample TyperObj, config DatabaseConfigObj) {
-	c := setupDB(config)
-	bp := setupBP(c, config)
+func InsertTyperObj(sample TyperObj, dbObj DBObj) {
+	connectDB(&dbObj)
+	defer disconnectDB(&dbObj)
+	bp := setupBP(dbObj.DBConfig)
 
 	fields := map[string]interface{}{
 		"url":          sample.Url,
@@ -339,15 +321,12 @@ func InsertTyperObj(sample TyperObj, config DatabaseConfigObj) {
 	}
 	log.Printf("added TyperObj!")
 
-	// close client resources
-	if err := c.Close(); err != nil {
-		log.Fatal(err)
-	}
 }
 
-func InsertMessengerObj(sample MessengerObj, config DatabaseConfigObj) {
-	c := setupDB(config)
-	bp := setupBP(c, config)
+func InsertMessengerObj(sample MessengerObj, dbObj DBObj) {
+	connectDB(&dbObj)
+	defer disconnectDB(&dbObj)
+	bp := setupBP(dbObj.DBConfig)
 
 	fields := map[string]interface{}{
 		"fbid":         sample.FBID,
@@ -366,9 +345,4 @@ func InsertMessengerObj(sample MessengerObj, config DatabaseConfigObj) {
 		log.Fatal(err)
 	}
 	log.Printf("added TyperObj!")
-
-	// close client resources
-	if err := c.Close(); err != nil {
-		log.Fatal(err)
-	}
 }
