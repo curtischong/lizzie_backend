@@ -30,7 +30,7 @@ type TyperObj = network.TyperObj
 // Watch
 func (s server) routes(config DatabaseConfigObj) {
 	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall())
-	s.router.HandleFunc("/messenger_sent_field", s.messengerSentFieldCall())
+	s.router.HandleFunc("/messenger_sent_text", s.messengerSentFieldCall())
 	s.router.HandleFunc("/upload_bio_samples", s.uploadBioSamplesCall(config))
 	s.router.HandleFunc("/upload_emotion_evaluation", s.uploadEmotionEvaluationCall(config))
 	s.router.HandleFunc("/upload_mark_event", s.uploadMarkEventCall(config))

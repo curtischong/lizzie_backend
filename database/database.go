@@ -17,6 +17,8 @@ type MarkEventObj = network.MarkEventObj
 type SkillObj = network.SkillObj
 type ReviewObj = network.ReviewObj
 type ScheduledReviewObj = network.ScheduledReviewObj
+type TyperObj = network.TyperObj
+type MessengerObj = network.MessengerObj
 
 type DatabaseConfigObj = config.DatabaseConfigObj
 
@@ -52,15 +54,15 @@ func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config DatabaseConf
 	bp := setupBP(c, config)
 
 	fields := map[string]interface{}{
-		"accomplishedEval": sample.AccomplishedEval,
-		"socialEval":       sample.SocialEval,
-		"exhaustedEval":    sample.ExhaustedEval,
-		"tiredEval":        sample.TiredEval,
-		"happyEval":        sample.HappyEval,
-		"comments":         sample.Comments,
+		"accomplished_eval": sample.AccomplishedEval,
+		"social_eval":       sample.SocialEval,
+		"exhausted_eval":    sample.ExhaustedEval,
+		"tired_eval":        sample.TiredEval,
+		"happy_eval":        sample.HappyEval,
+		"comments":          sample.Comments,
 	}
 
-	pt, err := influx.NewPoint("emotionEvaluations", nil, fields, serverutils.StringToDate(sample.EvalDatetime))
+	pt, err := influx.NewPoint("emotion_evaluations", nil, fields, serverutils.StringToDate(sample.EvalDatetime))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -118,26 +120,26 @@ func InsertMarkEventObj(sample MarkEventObj, config DatabaseConfigObj) {
 	}
 
 	fields := map[string]interface{}{
-		"isReaction":           parsedIsReaction,
-		"timeOfEvent":          parsedTimeOfEvent,
-		"reactionEnd":          parsedReactionEnd,
-		"emotionsFeltFear":     emotionRatings[0],
-		"emotionsFeltJoy":      emotionRatings[1],
-		"emotionsFeltAnger":    emotionRatings[2],
-		"emotionsFeltSad":      emotionRatings[3],
-		"emotionsFeltDisgust":  emotionRatings[4],
-		"emotionsFeltSuprise":  emotionRatings[5],
-		"emotionsFeltContempt": emotionRatings[6],
-		"emotionsFeltInterest": emotionRatings[7],
-		"comments":             sample.Comments,
-		"biometricsViewedHR":   typeBiometricsViewed[0],
+		"is_reaction":            parsedIsReaction,
+		"time_of_event":          parsedTimeOfEvent,
+		"reaction_end":           parsedReactionEnd,
+		"emotions_felt_fear":     emotionRatings[0],
+		"emotions_felt_joy":      emotionRatings[1],
+		"emotions_felt_anger":    emotionRatings[2],
+		"emotions_felt_sad":      emotionRatings[3],
+		"emotions_felt_disgust":  emotionRatings[4],
+		"emotions_felt_suprise":  emotionRatings[5],
+		"emotions_felt_contempt": emotionRatings[6],
+		"emotions_felt_interest": emotionRatings[7],
+		"comments":               sample.Comments,
+		"biometrics_viewed_hr":   typeBiometricsViewed[0],
 	}
 
 	if parsedIsReaction == 0 {
 		fields["anticipationStart"] = parsedAnticipationStart
 	}
 
-	pt, err := influx.NewPoint("MarkEventObjs", nil, fields, time.Unix(0, int64(parsedTimeOfMark*1000000)))
+	pt, err := influx.NewPoint("mark_events", nil, fields, time.Unix(0, int64(parsedTimeOfMark*1000000)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -183,12 +185,12 @@ func InsertBioSamplesObj(sample BioSamplesObj, config DatabaseConfigObj) {
 		parsedEndTime, err := strconv.ParseFloat(endTimes[i], 64)
 
 		fields := map[string]interface{}{
-			"dataPointName": dataPointNames[i],
-			"startTime":     parsedStartTime,
-			"measurement":   measurement,
+			"data_point_name": dataPointNames[i],
+			"start_time":      parsedStartTime,
+			"measurement":     measurement,
 		}
 
-		pt, err := influx.NewPoint("BioSamplesObj", nil, fields, time.Unix(0, int64(parsedEndTime*1000000)))
+		pt, err := influx.NewPoint("bio_samples", nil, fields, time.Unix(0, int64(parsedEndTime*1000000)))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -216,14 +218,14 @@ func InsertSkillObj(sample SkillObj, config DatabaseConfigObj) {
 	parsedTimeLearned, err := strconv.ParseFloat(sample.TimeLearned, 64)
 
 	fields := map[string]interface{}{
-		"concept":           sample.Concept,
-		"newLearnings":      sample.NewLearnings,
-		"oldSkills":         sample.OldSkills,
-		"percentNew":        parsedPercentNew,
-		"timeSpentLearning": parsedTimeSpentLearning,
+		"concept":             sample.Concept,
+		"new_earnings":        sample.NewLearnings,
+		"old_skills":          sample.OldSkills,
+		"percent_new":         parsedPercentNew,
+		"time_spent_learning": parsedTimeSpentLearning,
 	}
 
-	pt, err := influx.NewPoint("learnedSkills", nil, fields, time.Unix(0, int64(parsedTimeLearned*1000000)))
+	pt, err := influx.NewPoint("learned_skills", nil, fields, time.Unix(0, int64(parsedTimeLearned*1000000)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -250,13 +252,13 @@ func InsertReviewObj(sample ReviewObj, config DatabaseConfigObj) {
 	parsedTimeLearned, err := strconv.ParseFloat(sample.TimeLearned, 64)
 
 	fields := map[string]interface{}{
-		"concept":        sample.Concept,
-		"dateReviewed":   parsedDateReviewed,
-		"newLearnings":   sample.NewLearnings,
-		"reviewDuration": parsedReviewDuration,
+		"concept":         sample.Concept,
+		"date_reviewed":   parsedDateReviewed,
+		"new_learnings":   sample.NewLearnings,
+		"review_duration": parsedReviewDuration,
 	}
 
-	pt, err := influx.NewPoint("skillReviews", nil, fields, time.Unix(0, int64(parsedTimeLearned*1000000)))
+	pt, err := influx.NewPoint("skill_reviews", nil, fields, time.Unix(0, int64(parsedTimeLearned*1000000)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -283,13 +285,13 @@ func InsertScheduledReviewObj(sample ScheduledReviewObj, config DatabaseConfigOb
 	parsedTimeLearned, err := strconv.ParseFloat(sample.TimeLearned, 64)
 
 	fields := map[string]interface{}{
-		"concept":           sample.Concept,
-		"timeLearned":       parsedTimeLearned,
-		"scheduledDate":     parsedScheduledDate,
-		"scheduledDuration": parsedScheduledDuration,
+		"concept":            sample.Concept,
+		"time_learned":       parsedTimeLearned,
+		"scheduled_date":     parsedScheduledDate,
+		"scheduled_duration": parsedScheduledDuration,
 	}
 
-	pt, err := influx.NewPoint("scheduledReviews", nil, fields, time.Unix(0, int64(parsedTimeLearned*1000000)))
+	pt, err := influx.NewPoint("scheduled_reviews", nil, fields, time.Unix(0, int64(parsedTimeLearned*1000000)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -300,6 +302,62 @@ func InsertScheduledReviewObj(sample ScheduledReviewObj, config DatabaseConfigOb
 		log.Fatal(err)
 	}
 	log.Printf("added ScheduledSkillReview!")
+
+	// close client resources
+	if err := c.Close(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func InsertTyperObj(sample TyperObj, config DatabaseConfigObj) {
+	c := setupDB(config)
+	bp := setupBP(c, config)
+
+	fields := map[string]interface{}{
+		"url":          sample.Url,
+		"text":         sample.Text,
+		"deleted_text": sample.DeletedText,
+	}
+
+	pt, err := influx.NewPoint("typer_text", nil, fields, time.Unix(0, int64(sample.TimeSent*1000000)))
+	if err != nil {
+		log.Fatal(err)
+	}
+	bp.AddPoint(pt)
+
+	// write the batch
+	if err := c.Write(bp); err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("added TyperObj!")
+
+	// close client resources
+	if err := c.Close(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func InsertMessengerObj(sample MessengerObj, config DatabaseConfigObj) {
+	c := setupDB(config)
+	bp := setupBP(c, config)
+
+	fields := map[string]interface{}{
+		"fbid":         sample.FBID,
+		"message":      sample.Message,
+		"deleted_text": sample.DeletedText,
+	}
+
+	pt, err := influx.NewPoint("typer_text", nil, fields, time.Unix(0, int64(sample.TimeSent*1000000)))
+	if err != nil {
+		log.Fatal(err)
+	}
+	bp.AddPoint(pt)
+
+	// write the batch
+	if err := c.Write(bp); err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("added TyperObj!")
 
 	// close client resources
 	if err := c.Close(); err != nil {

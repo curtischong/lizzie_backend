@@ -32,6 +32,7 @@ type EmotionEvaluationNetworkObj struct {
 type EmotionEvaluationSliderObj struct {
 	EvalType string `json:"evalType"`
 	EvalVal  string `json:"evalVal"`
+	EvalTime string `json:evalTime` // TODO: update API on clients to send this
 }
 
 // MarkEventObj describes a received MarkEvent
@@ -71,4 +72,19 @@ type ScheduledReviewObj struct {
 	TimeLearned       string `json:"timeLearned"`
 	ScheduledDate     string `json:"scheduledDate"`
 	ScheduledDuration string `json:"scheduledDuration"`
+}
+
+// TyperObj describes text I sent
+type TyperObj struct {
+	Url         string `json:"url"`
+	Text        string `json:"text"`
+	DeletedText bool   `json:deletedText`
+	TimeSent    uint32 `json:"timeSent"` // int32 should fit but just in case
+}
+
+type MessengerObj struct {
+	FBID        string `json:"url"`
+	Message     string `json:"message"`
+	DeletedText bool   `json:deletedText`
+	TimeSent    uint32 `json:"timeSent"` // int32 should fit but just in case
 }
