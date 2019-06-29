@@ -13,6 +13,8 @@ import (
 	"net/http"
 )
 
+const DEV = true
+
 type server struct {
 	router *http.ServeMux
 }
@@ -26,11 +28,12 @@ type SkillObj = network.SkillObj
 type ReviewObj = network.ReviewObj
 type ScheduledReviewObj = network.ScheduledReviewObj
 type TyperObj = network.TyperObj
+type MessengerObj = network.MessengerObj
 
 // Watch
 func (s server) routes(config DatabaseConfigObj) {
-	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall())
-	s.router.HandleFunc("/messenger_sent_text", s.messengerSentFieldCall())
+	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall(config))
+	s.router.HandleFunc("/messenger_sent_text", s.messengerSentFieldCall(config))
 	s.router.HandleFunc("/upload_bio_samples", s.uploadBioSamplesCall(config))
 	s.router.HandleFunc("/upload_emotion_evaluation", s.uploadEmotionEvaluationCall(config))
 	s.router.HandleFunc("/upload_mark_event", s.uploadMarkEventCall(config))
@@ -198,7 +201,7 @@ func (s *server) uploadScheduledReviewCall(config DatabaseConfigObj) http.Handle
 	}
 }
 
-func (s *server) typerSentFieldCall() http.HandlerFunc {
+func (s *server) typerSentFieldCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		// NOTE: do not remove this line. Very good to debug incorrect encoding types from client
@@ -217,7 +220,7 @@ func (s *server) typerSentFieldCall() http.HandlerFunc {
 	}
 }
 
-func (s *server) messengerSentFieldCall() http.HandlerFunc {
+func (s *server) messengerSentFieldCall(config DatabaseConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		// NOTE: do not remove this line. Very good to debug incorrect encoding types from client
@@ -232,7 +235,7 @@ func (s *server) messengerSentFieldCall() http.HandlerFunc {
 			log.Fatal(jsonErr)
 		}
 		fmt.Println(parsedResonse)
-		database.InsertTyperObj(parsedResonse, config)
+		database.InsertMessengerObj(parsedResonse, config)
 	}
 }
 
@@ -241,6 +244,7 @@ func main() {
 	s := server{
 		router: http.NewServeMux(),
 	}
+	config.DatabaseConfigObj.IsDev = DEV
 	s.routes(config.DatabaseConfigObj)
 	log.Println("serving on port: " + config.ServerConfigObj.Port)
 	log.Fatal(http.ListenAndServe(":"+config.ServerConfigObj.Port, s.router))

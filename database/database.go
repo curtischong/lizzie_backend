@@ -26,15 +26,23 @@ type DatabaseConfigObj = config.DatabaseConfigObj
 
 // setupDB returns influxDB client
 func setupDB(config DatabaseConfigObj) influx.Client {
+	var dbip string
+	if config.IsDev {
+		dbip = config.DevDBIP
+	} else {
+		dbip = config.ProdDBIP
+	}
 	c, err := influx.NewHTTPClient(influx.HTTPConfig{
-		Addr:     config.DBIP,
+		Addr:     dbip,
 		Username: config.Username,
 		Password: config.Password,
 	})
+	defer c.Close()
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer c.Close()
+	log.Printf("Connected to Database!")
 	return c
 }
 
