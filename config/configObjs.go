@@ -7,10 +7,10 @@ type DBConfigObj struct {
 	Password string `json:"password"`
 	ProdDBIP string `json:"proddbip"`
 	DevDBIP  string `json:"devdbip"`
-	IsDev    bool   `json:"isdev`
 }
 
 // ServerConfigObj for general config
 type ServerConfigObj struct {
-	Port string `json:"port"`
+	Port  string `json:"port"`
+	IsDev bool   `json:"isdev"`
 }

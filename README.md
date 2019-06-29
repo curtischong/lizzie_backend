@@ -10,6 +10,11 @@
     - This has the bennefit of not having to import package-specific libraries in other packages
     - ex: the influx client package into main
 - All database names and columns are snake_case
+- There should only be one config object passed through the stack.
+   - bc variables like IsDev is used everywhere (also LogV - log verbosity) //TODO: impliment LogV
+   - DO NOT copy the config variable into an object's own config.
+      - you don't know which version of the config to trust
+      - if you also pass in a config variable you are passing two of the same config
 - Try to use this style to create objects:
 ```
 dbObj := DBObj{

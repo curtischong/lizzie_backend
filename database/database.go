@@ -25,40 +25,43 @@ type ConfigObj = config.ConfigObj
 
 //type Client = influx.Client
 
-func createDBObj(config ConfigObj) DBObj {
-
+func SetupDB(config ConfigObj) DBObj {
+	db := DBObj{
+		DBClient: nil,
+	}
+	return db
 }
 
-func connectDB(dbObj *DBObj) {
+func connectDB(config ConfigObj, db *DBObj) {
 	var dbip string
-	var config = dbObj.DBConfig
-	if config.IsDev {
-		dbip = config.DevDBIP
+	var dbConfig = config.DBConfig
+	if config.ServerConfig.IsDev {
+		dbip = dbConfig.DevDBIP
 	} else {
-		dbip = config.ProdDBIP
+		dbip = dbConfig.ProdDBIP
 	}
 	c, err := influx.NewHTTPClient(influx.HTTPConfig{
 		Addr:     dbip,
-		Username: config.Username,
-		Password: config.Password,
+		Username: dbConfig.Username,
+		Password: dbConfig.Password,
 	})
 
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("Connected to DB!")
-	dbObj.DBClient = c
+	db.DBClient = c
 }
 
-func disconnectDB(dbObj *DBObj) {
-	if err := dbObj.DBClient.Close(); err != nil {
+func disconnectDB(db *DBObj) {
+	if err := db.DBClient.Close(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func setupBP(config DBConfigObj) influx.BatchPoints {
+func setupBP(config ConfigObj) influx.BatchPoints {
 	bp, err := influx.NewBatchPoints(influx.BatchPointsConfig{
-		Database:  config.DBName,
+		Database:  config.DBConfig.DBName,
 		Precision: "ms",
 	})
 	if err != nil {
@@ -67,10 +70,10 @@ func setupBP(config DBConfigObj) influx.BatchPoints {
 	return bp
 }
 
-func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, db DBObj) {
-	connectDB(&db)
+func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config ConfigObj, db DBObj) {
+	connectDB(config, &db)
 	defer disconnectDB(&db)
-	bp := setupBP(db.DBConfig)
+	bp := setupBP(config)
 
 	fields := map[string]interface{}{
 		"accomplished_eval": sample.AccomplishedEval,
@@ -94,10 +97,10 @@ func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, db DBObj) {
 	log.Printf("added emotionevaluation!")
 }
 
-func InsertMarkEventObj(sample MarkEventObj, db DBObj) {
-	connectDB(&db)
+func InsertMarkEventObj(sample MarkEventObj, config ConfigObj, db DBObj) {
+	connectDB(config, &db)
 	defer disconnectDB(&db)
-	bp := setupBP(db.DBConfig)
+	bp := setupBP(config)
 
 	var emotionRatings []int
 	err2 := json.Unmarshal([]byte(sample.EmotionsFelt), &emotionRatings)
@@ -167,10 +170,10 @@ func InsertMarkEventObj(sample MarkEventObj, db DBObj) {
 	log.Printf("added MarkEventObj!")
 }
 
-func InsertBioSamplesObj(sample BioSamplesObj, db DBObj) {
-	connectDB(&db)
+func InsertBioSamplesObj(sample BioSamplesObj, config ConfigObj, db DBObj) {
+	connectDB(config, &db)
 	defer disconnectDB(&db)
-	bp := setupBP(db.DBConfig)
+	bp := setupBP(config)
 
 	var dataPointNames []string
 	err2 := json.Unmarshal([]byte(sample.DataPointNames), &dataPointNames)
@@ -215,10 +218,10 @@ func InsertBioSamplesObj(sample BioSamplesObj, db DBObj) {
 	log.Printf("added BioSamplesObj!")
 }
 
-func InsertSkillObj(sample SkillObj, db DBObj) {
-	connectDB(&db)
+func InsertSkillObj(sample SkillObj, config ConfigObj, db DBObj) {
+	connectDB(config, &db)
 	defer disconnectDB(&db)
-	bp := setupBP(db.DBConfig)
+	bp := setupBP(config)
 
 	parsedPercentNew, err := strconv.ParseInt(sample.PercentNew, 10, 64)
 	parsedTimeSpentLearning, err := strconv.ParseInt(sample.TimeSpentLearning, 10, 64)
@@ -245,10 +248,10 @@ func InsertSkillObj(sample SkillObj, db DBObj) {
 	log.Printf("added learnedSkill!")
 }
 
-func InsertReviewObj(sample ReviewObj, db DBObj) {
-	connectDB(&db)
+func InsertReviewObj(sample ReviewObj, config ConfigObj, db DBObj) {
+	connectDB(config, &db)
 	defer disconnectDB(&db)
-	bp := setupBP(db.DBConfig)
+	bp := setupBP(config)
 
 	parsedDateReviewed, err := strconv.ParseFloat(sample.DateReviewed, 64)
 	parsedReviewDuration, err := strconv.ParseInt(sample.ReviewDuration, 10, 64)
@@ -274,10 +277,10 @@ func InsertReviewObj(sample ReviewObj, db DBObj) {
 	log.Printf("added SkillReview!")
 }
 
-func InsertScheduledReviewObj(sample ScheduledReviewObj, db DBObj) {
-	connectDB(&db)
+func InsertScheduledReviewObj(sample ScheduledReviewObj, config ConfigObj, db DBObj) {
+	connectDB(config, &db)
 	defer disconnectDB(&db)
-	bp := setupBP(db.DBConfig)
+	bp := setupBP(config)
 
 	parsedScheduledDate, err := strconv.ParseFloat(sample.ScheduledDate, 64)
 	parsedScheduledDuration, err := strconv.ParseInt(sample.ScheduledDuration, 10, 64)
@@ -303,10 +306,10 @@ func InsertScheduledReviewObj(sample ScheduledReviewObj, db DBObj) {
 	log.Printf("added ScheduledSkillReview!")
 }
 
-func InsertTyperObj(sample TyperObj, db DBObj) {
-	connectDB(&db)
+func InsertTyperObj(sample TyperObj, config ConfigObj, db DBObj) {
+	connectDB(config, &db)
 	defer disconnectDB(&db)
-	bp := setupBP(db.DBConfig)
+	bp := setupBP(config)
 
 	fields := map[string]interface{}{
 		"url":          sample.Url,
@@ -328,10 +331,10 @@ func InsertTyperObj(sample TyperObj, db DBObj) {
 
 }
 
-func InsertMessengerObj(sample MessengerObj, db DBObj) {
-	connectDB(&db)
+func InsertMessengerObj(sample MessengerObj, config ConfigObj, db DBObj) {
+	connectDB(config, &db)
 	defer disconnectDB(&db)
-	bp := setupBP(db.DBConfig)
+	bp := setupBP(config)
 
 	fields := map[string]interface{}{
 		"fbid":         sample.FBID,

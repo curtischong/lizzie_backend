@@ -19,7 +19,8 @@ type server struct {
 	router *http.ServeMux
 }
 
-type DatabaseConfigObj = database.DatabaseConfigObj
+type DBConfigObj = database.DBConfigObj
+type ConfigObj = config.ConfigObj
 type DBObj = database.DBObj
 type EmotionEvaluationObj = network.EmotionEvaluationObj
 type EmotionEvaluationNetworkObj = network.EmotionEvaluationNetworkObj
@@ -32,15 +33,15 @@ type TyperObj = network.TyperObj
 type MessengerObj = network.MessengerObj
 
 // Watch
-func (s server) routes(DBObj DBObj) {
-	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall(DBObj))
-	s.router.HandleFunc("/messenger_sent_text", s.messengerSentFieldCall(DBObj))
-	s.router.HandleFunc("/upload_bio_samples", s.uploadBioSamplesCall(DBObj))
-	s.router.HandleFunc("/upload_emotion_evaluation", s.uploadEmotionEvaluationCall(DBObj))
-	s.router.HandleFunc("/upload_mark_event", s.uploadMarkEventCall(DBObj))
-	s.router.HandleFunc("/upload_skill", s.uploadSkillCall(DBObj))
-	s.router.HandleFunc("/upload_review", s.uploadReviewCall(DBObj))
-	s.router.HandleFunc("/upload_scheduled_review", s.uploadScheduledReviewCall(DBObj))
+func (s server) routes(config ConfigObj, db DBObj) {
+	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall(config, db))
+	s.router.HandleFunc("/messenger_sent_text", s.messengerSentFieldCall(config, db))
+	s.router.HandleFunc("/upload_bio_samples", s.uploadBioSamplesCall(config, db))
+	s.router.HandleFunc("/upload_emotion_evaluation", s.uploadEmotionEvaluationCall(config, db))
+	s.router.HandleFunc("/upload_mark_event", s.uploadMarkEventCall(config, db))
+	s.router.HandleFunc("/upload_skill", s.uploadSkillCall(config, db))
+	s.router.HandleFunc("/upload_review", s.uploadReviewCall(config, db))
+	s.router.HandleFunc("/upload_scheduled_review", s.uploadScheduledReviewCall(config, db))
 	//s.router.HandleFunc("/admin", s.adminOnly(s.handleAdminIndex()))
 }
 
@@ -57,37 +58,7 @@ func getResponseBody(w http.ResponseWriter, response *http.Request) []byte {
 	return body
 }
 
-func uploadBioSamplesCall(w http.ResponseWriter, response *http.Request, resCall string) http.HandlerFunc {
-
-	return func(w http.ResponseWriter, response *http.Request) {
-		body := getResponseBody(w, response)
-		parsedResonse := BioSamplesObj{}
-		jsonErr := json.Unmarshal(body, &parsedResonse)
-		if jsonErr != nil {
-			log.Println(body)
-			log.Printf("error decoding emotion evaluation response: %v", jsonErr)
-			if e, ok := jsonErr.(*json.SyntaxError); ok {
-				log.Printf("syntax error at byte offset %d", e.Offset)
-			}
-			log.Printf("watch response: %q", body)
-		}
-	}
-	/*
-		if(resCall == "bioSample"){
-			parsedResonss := NetworkObj{}
-		}else if(resCall == "emotionEval"){
-
-		}else if(resCall == "markEvent"){
-
-		}else if(resCall == "skill"){
-
-		}else if(resCall == "review"){
-
-		}*/
-
-}
-
-func (s *server) uploadEmotionEvaluationCall(dbObj DBObj) http.HandlerFunc {
+func (s *server) uploadEmotionEvaluationCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		parsedResonse := EmotionEvaluationNetworkObj{}
@@ -110,11 +81,11 @@ func (s *server) uploadEmotionEvaluationCall(dbObj DBObj) http.HandlerFunc {
 
 		//fmt.Println(parsedResonse.TiredEval)
 
-		database.InsertEmotionEvaluationObj(resObj, dbObj)
+		database.InsertEmotionEvaluationObj(resObj, config, db)
 	}
 }
 
-func (s *server) uploadMarkEventCall(dbObj DBObj) http.HandlerFunc {
+func (s *server) uploadMarkEventCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		parsedResonse := MarkEventObj{}
@@ -130,10 +101,10 @@ func (s *server) uploadMarkEventCall(dbObj DBObj) http.HandlerFunc {
 
 		fmt.Println(parsedResonse.IsReaction)
 
-		database.InsertMarkEventObj(parsedResonse, dbObj)
+		database.InsertMarkEventObj(parsedResonse, config, db)
 	}
 }
-func (s *server) uploadBioSamplesCall(dbObj DBObj) http.HandlerFunc {
+func (s *server) uploadBioSamplesCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		parsedResonse := BioSamplesObj{}
@@ -150,11 +121,11 @@ func (s *server) uploadBioSamplesCall(dbObj DBObj) http.HandlerFunc {
 		//fmt.Println(parsedResonse)
 		fmt.Fprintf(w, "bio snapshot")
 
-		database.InsertBioSamplesObj(parsedResonse, dbObj)
+		database.InsertBioSamplesObj(parsedResonse, config, db)
 	}
 }
 
-func (s *server) uploadSkillCall(dbObj DBObj) http.HandlerFunc {
+func (s *server) uploadSkillCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		parsedResonse := SkillObj{}
@@ -166,11 +137,11 @@ func (s *server) uploadSkillCall(dbObj DBObj) http.HandlerFunc {
 		}
 
 		fmt.Println(parsedResonse)
-		database.InsertSkillObj(parsedResonse, dbObj)
+		database.InsertSkillObj(parsedResonse, config, db)
 	}
 }
 
-func (s *server) uploadReviewCall(dbObj DBObj) http.HandlerFunc {
+func (s *server) uploadReviewCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		parsedResonse := ReviewObj{}
@@ -182,11 +153,11 @@ func (s *server) uploadReviewCall(dbObj DBObj) http.HandlerFunc {
 		}
 
 		fmt.Println(parsedResonse)
-		database.InsertReviewObj(parsedResonse, dbObj)
+		database.InsertReviewObj(parsedResonse, config, db)
 	}
 }
 
-func (s *server) uploadScheduledReviewCall(dbObj DBObj) http.HandlerFunc {
+func (s *server) uploadScheduledReviewCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		parsedResonse := ScheduledReviewObj{}
@@ -198,11 +169,11 @@ func (s *server) uploadScheduledReviewCall(dbObj DBObj) http.HandlerFunc {
 		}
 
 		fmt.Println(parsedResonse)
-		database.InsertScheduledReviewObj(parsedResonse, dbObj)
+		database.InsertScheduledReviewObj(parsedResonse, config, db)
 	}
 }
 
-func (s *server) typerSentFieldCall(dbObj DBObj) http.HandlerFunc {
+func (s *server) typerSentFieldCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		// NOTE: do not remove this line. Very good to debug incorrect encoding types from client
@@ -217,11 +188,11 @@ func (s *server) typerSentFieldCall(dbObj DBObj) http.HandlerFunc {
 			log.Fatal(jsonErr)
 		}
 		fmt.Println(parsedResonse)
-		database.InsertTyperObj(parsedResonse, dbObj)
+		database.InsertTyperObj(parsedResonse, config, db)
 	}
 }
 
-func (s *server) messengerSentFieldCall(dbObj DBObj) http.HandlerFunc {
+func (s *server) messengerSentFieldCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		// NOTE: do not remove this line. Very good to debug incorrect encoding types from client
@@ -236,7 +207,7 @@ func (s *server) messengerSentFieldCall(dbObj DBObj) http.HandlerFunc {
 			log.Fatal(jsonErr)
 		}
 		fmt.Println(parsedResonse)
-		database.InsertMessengerObj(parsedResonse, dbObj)
+		database.InsertMessengerObj(parsedResonse, config, db)
 	}
 }
 
@@ -246,13 +217,9 @@ func main() {
 		router: http.NewServeMux(),
 	}
 
-	config.DBConfig.IsDev = DEV
-	dbObj := DBObj{
-		DBConfigObj: config.DBConfig
-		DBClient: nil
-	}
+	db := database.SetupDB(config)
 
-	s.routes(dbObj)
+	s.routes(config, db)
 	log.Println("serving on port: " + config.ServerConfig.Port)
 	log.Fatal(http.ListenAndServe(":"+config.ServerConfig.Port, s.router))
 
