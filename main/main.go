@@ -245,15 +245,16 @@ func main() {
 	s := server{
 		router: http.NewServeMux(),
 	}
-	config.DBConfigObj.IsDev = DEV
+
+	config.DBConfig.IsDev = DEV
 	dbObj := DBObj{
-		DBConfigObj: config.DBConfigObj
+		DBConfigObj: config.DBConfig
 		DBClient: nil
 	}
 
 	s.routes(dbObj)
-	log.Println("serving on port: " + config.ServerConfigObj.Port)
-	log.Fatal(http.ListenAndServe(":"+config.ServerConfigObj.Port, s.router))
+	log.Println("serving on port: " + config.ServerConfig.Port)
+	log.Fatal(http.ListenAndServe(":"+config.ServerConfig.Port, s.router))
 
 	// write a case to close this connection
 	//database.closeDBConnection(&DBObj.dbClient)

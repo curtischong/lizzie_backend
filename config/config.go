@@ -9,13 +9,13 @@ import (
 
 //type DatabaseConfigObj = database.DatabaseConfigObj
 
-type Config struct {
-	DatabaseConfigObj DatabaseConfigObj `json:"databaseConfig"`
-	ServerConfigObj   ServerConfigObj   `json:"serverConfig"`
+type ConfigObj struct {
+	DBConfig     DBConfigObj     `json:"databaseConfig"`
+	ServerConfig ServerConfigObj `json:"serverConfig"`
 }
 
-func LoadConfiguration(file string) Config {
-	var config Config
+func LoadConfiguration(file string) ConfigObj {
+	var config ConfigObj
 	configFile, err := os.Open(file)
 	defer configFile.Close()
 	if err != nil {

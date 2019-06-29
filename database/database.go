@@ -21,8 +21,13 @@ type TyperObj = network.TyperObj
 type MessengerObj = network.MessengerObj
 
 type DBConfigObj = config.DBConfigObj
+type ConfigObj = config.ConfigObj
 
 //type Client = influx.Client
+
+func createDBObj(config ConfigObj) DBObj {
+
+}
 
 func connectDB(dbObj *DBObj) {
 	var dbip string
@@ -53,7 +58,7 @@ func disconnectDB(dbObj *DBObj) {
 
 func setupBP(config DBConfigObj) influx.BatchPoints {
 	bp, err := influx.NewBatchPoints(influx.BatchPointsConfig{
-		DB:        config.DBName,
+		Database:  config.DBName,
 		Precision: "ms",
 	})
 	if err != nil {
@@ -62,10 +67,10 @@ func setupBP(config DBConfigObj) influx.BatchPoints {
 	return bp
 }
 
-func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, dbObj DBObj) {
-	connectDB(&dbObj)
-	defer disconnectDB(&dbObj)
-	bp := setupBP(dbObj.DBConfig)
+func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, db DBObj) {
+	connectDB(&db)
+	defer disconnectDB(&db)
+	bp := setupBP(db.DBConfig)
 
 	fields := map[string]interface{}{
 		"accomplished_eval": sample.AccomplishedEval,
@@ -83,16 +88,16 @@ func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, dbObj DBObj) {
 	bp.AddPoint(pt)
 
 	// write the batch
-	if err := dbObj.DBClient.Write(bp); err != nil {
+	if err := db.DBClient.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("added emotionevaluation!")
 }
 
-func InsertMarkEventObj(sample MarkEventObj, dbObj DBObj) {
-	connectDB(&dbObj)
-	defer disconnectDB(&dbObj)
-	bp := setupBP(dbObj.DBConfig)
+func InsertMarkEventObj(sample MarkEventObj, db DBObj) {
+	connectDB(&db)
+	defer disconnectDB(&db)
+	bp := setupBP(db.DBConfig)
 
 	var emotionRatings []int
 	err2 := json.Unmarshal([]byte(sample.EmotionsFelt), &emotionRatings)
@@ -156,16 +161,16 @@ func InsertMarkEventObj(sample MarkEventObj, dbObj DBObj) {
 	bp.AddPoint(pt)
 
 	// Write the batch
-	if err := c.Write(bp); err != nil {
+	if err := db.DBClient.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("added MarkEventObj!")
 }
 
-func InsertBioSamplesObj(sample BioSamplesObj, dbObj DBObj) {
-	connectDB(&dbObj)
-	defer disconnectDB(&dbObj)
-	bp := setupBP(dbObj.DBConfig)
+func InsertBioSamplesObj(sample BioSamplesObj, db DBObj) {
+	connectDB(&db)
+	defer disconnectDB(&db)
+	bp := setupBP(db.DBConfig)
 
 	var dataPointNames []string
 	err2 := json.Unmarshal([]byte(sample.DataPointNames), &dataPointNames)
@@ -204,16 +209,16 @@ func InsertBioSamplesObj(sample BioSamplesObj, dbObj DBObj) {
 	}
 
 	// Write the batch
-	if err := c.Write(bp); err != nil {
+	if err := db.DBClient.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("added BioSamplesObj!")
 }
 
-func InsertSkillObj(sample SkillObj, dbObj DBObj) {
-	connectDB(&dbObj)
-	defer disconnectDB(&dbObj)
-	bp := setupBP(dbObj.DBConfig)
+func InsertSkillObj(sample SkillObj, db DBObj) {
+	connectDB(&db)
+	defer disconnectDB(&db)
+	bp := setupBP(db.DBConfig)
 
 	parsedPercentNew, err := strconv.ParseInt(sample.PercentNew, 10, 64)
 	parsedTimeSpentLearning, err := strconv.ParseInt(sample.TimeSpentLearning, 10, 64)
@@ -234,16 +239,16 @@ func InsertSkillObj(sample SkillObj, dbObj DBObj) {
 	bp.AddPoint(pt)
 
 	// write the batch
-	if err := c.Write(bp); err != nil {
+	if err := db.DBClient.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("added learnedSkill!")
 }
 
-func InsertReviewObj(sample ReviewObj, dbObj DBObj) {
-	connectDB(&dbObj)
-	defer disconnectDB(&dbObj)
-	bp := setupBP(dbObj.DBConfig)
+func InsertReviewObj(sample ReviewObj, db DBObj) {
+	connectDB(&db)
+	defer disconnectDB(&db)
+	bp := setupBP(db.DBConfig)
 
 	parsedDateReviewed, err := strconv.ParseFloat(sample.DateReviewed, 64)
 	parsedReviewDuration, err := strconv.ParseInt(sample.ReviewDuration, 10, 64)
@@ -263,16 +268,16 @@ func InsertReviewObj(sample ReviewObj, dbObj DBObj) {
 	bp.AddPoint(pt)
 
 	// write the batch
-	if err := c.Write(bp); err != nil {
+	if err := db.DBClient.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("added SkillReview!")
 }
 
-func InsertScheduledReviewObj(sample ScheduledReviewObj, dbObj DBObj) {
-	connectDB(&dbObj)
-	defer disconnectDB(&dbObj)
-	bp := setupBP(dbObj.DBConfig)
+func InsertScheduledReviewObj(sample ScheduledReviewObj, db DBObj) {
+	connectDB(&db)
+	defer disconnectDB(&db)
+	bp := setupBP(db.DBConfig)
 
 	parsedScheduledDate, err := strconv.ParseFloat(sample.ScheduledDate, 64)
 	parsedScheduledDuration, err := strconv.ParseInt(sample.ScheduledDuration, 10, 64)
@@ -292,16 +297,16 @@ func InsertScheduledReviewObj(sample ScheduledReviewObj, dbObj DBObj) {
 	bp.AddPoint(pt)
 
 	// write the batch
-	if err := c.Write(bp); err != nil {
+	if err := db.DBClient.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("added ScheduledSkillReview!")
 }
 
-func InsertTyperObj(sample TyperObj, dbObj DBObj) {
-	connectDB(&dbObj)
-	defer disconnectDB(&dbObj)
-	bp := setupBP(dbObj.DBConfig)
+func InsertTyperObj(sample TyperObj, db DBObj) {
+	connectDB(&db)
+	defer disconnectDB(&db)
+	bp := setupBP(db.DBConfig)
 
 	fields := map[string]interface{}{
 		"url":          sample.Url,
@@ -316,17 +321,17 @@ func InsertTyperObj(sample TyperObj, dbObj DBObj) {
 	bp.AddPoint(pt)
 
 	// write the batch
-	if err := c.Write(bp); err != nil {
+	if err := db.DBClient.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("added TyperObj!")
 
 }
 
-func InsertMessengerObj(sample MessengerObj, dbObj DBObj) {
-	connectDB(&dbObj)
-	defer disconnectDB(&dbObj)
-	bp := setupBP(dbObj.DBConfig)
+func InsertMessengerObj(sample MessengerObj, db DBObj) {
+	connectDB(&db)
+	defer disconnectDB(&db)
+	bp := setupBP(db.DBConfig)
 
 	fields := map[string]interface{}{
 		"fbid":         sample.FBID,
@@ -341,7 +346,7 @@ func InsertMessengerObj(sample MessengerObj, dbObj DBObj) {
 	bp.AddPoint(pt)
 
 	// write the batch
-	if err := c.Write(bp); err != nil {
+	if err := db.DBClient.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("added TyperObj!")
