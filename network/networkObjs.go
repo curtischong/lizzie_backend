@@ -79,12 +79,12 @@ type TyperObj struct {
 	Url         string `json:"url"`
 	Text        string `json:"text"`
 	DeletedText bool   `json:deletedText`
-	TimeSent    uint32 `json:"timeSent"` // int32 should fit but just in case
+	TimeSent    uint64 `json:"timeSent"` // int32 should fit but just in case
 }
 
 type MessengerObj struct {
 	FBID        string `json:"url"`
 	Message     string `json:"message"`
 	DeletedText bool   `json:deletedText`
-	TimeSent    uint32 `json:"timeSent"` // int32 should fit but just in case
+	TimeSent    uint64 `json:"timeSent"` // int32 should fit but just in case
 }

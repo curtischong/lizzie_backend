@@ -61,7 +61,7 @@ func getResponseBody(w http.ResponseWriter, response *http.Request) []byte {
 func (s *server) uploadEmotionEvaluationCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
-		parsedResonse := EmotionEvaluationNetworkObj{}
+		parsedResonse := EmotionEvaluationObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
@@ -71,17 +71,21 @@ func (s *server) uploadEmotionEvaluationCall(config ConfigObj, db DBObj) http.Ha
 			}
 			log.Printf("watch response: %q", body)
 		}
+		/*
+			sliders := parsedResonse.EvalSliders
+			for i := 0; i < len(sliders); i++ {
+				println(i, sliders[i])
+			}
 
-		sliders := parsedResonse.EvalSliders
-		for i := 0; i < len(sliders); i++ {
-			println(i, sliders[i])
-		}
+			resObj := EmotionEvaluationObj{}
 
-		resObj := EmotionEvaluationObj{}
+			//fmt.Println(parsedResonse.TiredEval)
 
-		//fmt.Println(parsedResonse.TiredEval)
-
-		database.InsertEmotionEvaluationObj(resObj, config, db)
+			if database.InsertEmotionEvaluationObj(parsedResonse, config, db) {
+				w.WriteHeader(200)
+			} else {
+				w.WriteHeader(500)
+			}*/
 	}
 }
 
@@ -101,7 +105,11 @@ func (s *server) uploadMarkEventCall(config ConfigObj, db DBObj) http.HandlerFun
 
 		fmt.Println(parsedResonse.IsReaction)
 
-		database.InsertMarkEventObj(parsedResonse, config, db)
+		if database.InsertMarkEventObj(parsedResonse, config, db) {
+			w.WriteHeader(200)
+		} else {
+			w.WriteHeader(500)
+		}
 	}
 }
 func (s *server) uploadBioSamplesCall(config ConfigObj, db DBObj) http.HandlerFunc {
@@ -121,7 +129,11 @@ func (s *server) uploadBioSamplesCall(config ConfigObj, db DBObj) http.HandlerFu
 		//fmt.Println(parsedResonse)
 		fmt.Fprintf(w, "bio snapshot")
 
-		database.InsertBioSamplesObj(parsedResonse, config, db)
+		if database.InsertBioSamplesObj(parsedResonse, config, db) {
+			w.WriteHeader(200)
+		} else {
+			w.WriteHeader(500)
+		}
 	}
 }
 
@@ -137,7 +149,11 @@ func (s *server) uploadSkillCall(config ConfigObj, db DBObj) http.HandlerFunc {
 		}
 
 		fmt.Println(parsedResonse)
-		database.InsertSkillObj(parsedResonse, config, db)
+		if database.InsertSkillObj(parsedResonse, config, db) {
+			w.WriteHeader(200)
+		} else {
+			w.WriteHeader(500)
+		}
 	}
 }
 
@@ -153,7 +169,11 @@ func (s *server) uploadReviewCall(config ConfigObj, db DBObj) http.HandlerFunc {
 		}
 
 		fmt.Println(parsedResonse)
-		database.InsertReviewObj(parsedResonse, config, db)
+		if database.InsertReviewObj(parsedResonse, config, db) {
+			w.WriteHeader(200)
+		} else {
+			w.WriteHeader(500)
+		}
 	}
 }
 
@@ -169,7 +189,11 @@ func (s *server) uploadScheduledReviewCall(config ConfigObj, db DBObj) http.Hand
 		}
 
 		fmt.Println(parsedResonse)
-		database.InsertScheduledReviewObj(parsedResonse, config, db)
+		if database.InsertScheduledReviewObj(parsedResonse, config, db) {
+			w.WriteHeader(200)
+		} else {
+			w.WriteHeader(500)
+		}
 	}
 }
 
@@ -188,9 +212,25 @@ func (s *server) typerSentFieldCall(config ConfigObj, db DBObj) http.HandlerFunc
 			log.Fatal(jsonErr)
 		}
 		fmt.Println(parsedResonse)
-		database.InsertTyperObj(parsedResonse, config, db)
+		if database.InsertTyperObj(parsedResonse, config, db) {
+			w.WriteHeader(200)
+		} else {
+			w.WriteHeader(500)
+		}
 	}
 }
+
+/*
+func handleSuccess(w http.ResponseWriter, success bool) {
+	if success {
+		log.Println("yes")
+		w.Write([]byte("hi"))
+		w.WriteHeader(200)
+	} else {
+		log.Println("nope")
+		w.WriteHeader(500)
+	}
+}*/
 
 func (s *server) messengerSentFieldCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
@@ -207,7 +247,14 @@ func (s *server) messengerSentFieldCall(config ConfigObj, db DBObj) http.Handler
 			log.Fatal(jsonErr)
 		}
 		fmt.Println(parsedResonse)
-		database.InsertMessengerObj(parsedResonse, config, db)
+		//handleSuccess(w, database.InsertMessengerObj(parsedResonse, config, db))
+
+		//w.Header().Set("Content-Type", "application/json")
+		if database.InsertMessengerObj(parsedResonse, config, db) {
+			w.WriteHeader(200)
+		} else {
+			w.WriteHeader(500)
+		}
 	}
 }
 
