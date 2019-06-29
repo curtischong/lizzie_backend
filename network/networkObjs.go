@@ -10,13 +10,28 @@ type BioSamplesObj struct {
 
 // EmotionEvaluationObj describes a received EmotionEvaluation
 type EmotionEvaluationObj struct {
-	TimeEndFillingForm string `json:"timeEndFillingForm"`
-	AccomplishedEval   string `json:"accomplishedEval"`
-	SocialEval         string `json:"socialEval"`
-	ExhaustedEval      string `json:"exhaustedEval"`
-	TiredEval          string `json:"tiredEval"`
-	HappyEval          string `json:"happyEval"`
-	Comments           string `json:"comments"`
+	EvalDatetime     string `json:"evalDatetime"`
+	AccomplishedEval string `json:"accomplishedEval"`
+	SocialEval       string `json:"socialEval"`
+	ExhaustedEval    string `json:"exhaustedEval"`
+	TiredEval        string `json:"tiredEval"`
+	HappyEval        string `json:"happyEval"`
+	Comments         string `json:"comments"`
+	EvalLocation     string `json:"evalLocation"`
+}
+
+// EmotionEvaluationNetworkObj describes a received EmotionEvaluation from the network
+type EmotionEvaluationNetworkObj struct {
+	EvalDatetime string `json:"evalDatetime"`
+	EvalSliders  string `json:"accomplishedEval"`
+	Comments     string `json:"comments"`
+	EvalLocation string `json:"evalLocation"`
+}
+
+// EmotionEvaluationSliderObj describes a received EmotionEvaluation from the network
+type EmotionEvaluationSliderObj struct {
+	EvalType string `json:"evalType"`
+	EvalVal  string `json:"evalVal"`
 }
 
 // MarkEventObj describes a received MarkEvent

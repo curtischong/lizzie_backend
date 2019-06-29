@@ -10,7 +10,8 @@ import (
 //type DatabaseConfigObj = database.DatabaseConfigObj
 
 type Config struct {
-	DatabaseConfigObj DatabaseConfigObj `json:"databaseconfig"`
+	DatabaseConfigObj DatabaseConfigObj `json:"databaseConfig"`
+	ServerConfigObj   ServerConfigObj   `json:"serverConfig"`
 }
 
 func LoadConfiguration(file string) Config {

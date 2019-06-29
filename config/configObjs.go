@@ -7,3 +7,8 @@ type DatabaseConfigObj struct {
 	Password string `json:"password"`
 	DBIP     string `json:"dbip"`
 }
+
+// ServerConfigObj for general config
+type ServerConfigObj struct {
+	Port string `json:"port"`
+}

@@ -60,7 +60,7 @@ func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config DatabaseConf
 		"comments":         sample.Comments,
 	}
 
-	pt, err := influx.NewPoint("emotionEvaluations", nil, fields, serverutils.StringToDate(sample.TimeEndFillingForm))
+	pt, err := influx.NewPoint("emotionEvaluations", nil, fields, serverutils.StringToDate(sample.EvalDatetime))
 	if err != nil {
 		log.Fatal(err)
 	}
