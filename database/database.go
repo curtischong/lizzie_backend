@@ -49,7 +49,7 @@ func connectDB(config ConfigObj, db *DBObj) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Connected to DB!")
+	log.Printf("Connected to DB at ip: %s", dbip)
 	db.DBClient = c
 }
 
