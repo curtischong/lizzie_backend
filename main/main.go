@@ -13,8 +13,6 @@ import (
 	"net/http"
 )
 
-const DEV = true
-
 type server struct {
 	router *http.ServeMux
 }
@@ -34,6 +32,7 @@ type MessengerObj = network.MessengerObj
 
 // Watch
 func (s server) routes(config ConfigObj, db DBObj) {
+	s.router.HandleFunc("/get_cards", s.getCardsCall(config, db))
 	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall(config, db))
 	s.router.HandleFunc("/messenger_sent_text", s.messengerSentFieldCall(config, db))
 	s.router.HandleFunc("/upload_bio_samples", s.uploadBioSamplesCall(config, db))
@@ -58,6 +57,48 @@ func getResponseBody(w http.ResponseWriter, response *http.Request) []byte {
 	return body
 }
 
+func enableCors(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/html; charset=ascii")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,access-control-allow-origin, access-control-allow-headers")
+}
+
+func (s *server) getCardsCall(config ConfigObj, db DBObj) http.HandlerFunc {
+	return func(w http.ResponseWriter, response *http.Request) {
+		enableCors(w)
+		cards, succ := database.GetCards(config, db)
+		if succ {
+			//TODO: consult with ppl if this is legit
+			// not sure cause I need to process the response
+			w.Write([]byte(cards))
+			w.WriteHeader(200)
+		} else {
+			w.WriteHeader(500)
+		}
+
+		/*
+			body := getResponseBody(w, response)
+			parsedResonse := EmotionEvaluationObj{}
+			jsonErr := json.Unmarshal(body, &parsedResonse)
+			if jsonErr != nil {
+				log.Println(body)
+				log.Printf("error decoding emotion evaluation response: %v", jsonErr)
+				if e, ok := jsonErr.(*json.SyntaxError); ok {
+					log.Printf("syntax error at byte offset %d", e.Offset)
+				}
+				log.Printf("watch response: %q", body)
+			}
+			fmt.Println(parsedResonse)*/
+
+		/*
+			if database.InsertEmotionEvaluationObj(parsedResonse, config, db) {
+				w.WriteHeader(200)
+			} else {
+				w.WriteHeader(500)
+			}*/
+	}
+}
+
 func (s *server) uploadEmotionEvaluationCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
@@ -65,27 +106,18 @@ func (s *server) uploadEmotionEvaluationCall(config ConfigObj, db DBObj) http.Ha
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
-			log.Printf("error decoding emotion evaluation response: %v", jsonErr)
-			if e, ok := jsonErr.(*json.SyntaxError); ok {
-				log.Printf("syntax error at byte offset %d", e.Offset)
-			}
-			log.Printf("watch response: %q", body)
+			log.Println("couldn't parse body")
+			log.Println(jsonErr)
+			w.WriteHeader(500)
+			return
 		}
-		/*
-			sliders := parsedResonse.EvalSliders
-			for i := 0; i < len(sliders); i++ {
-				println(i, sliders[i])
-			}
+		fmt.Println(parsedResonse)
 
-			resObj := EmotionEvaluationObj{}
-
-			//fmt.Println(parsedResonse.TiredEval)
-
-			if database.InsertEmotionEvaluationObj(parsedResonse, config, db) {
-				w.WriteHeader(200)
-			} else {
-				w.WriteHeader(500)
-			}*/
+		if database.InsertEmotionEvaluationObj(parsedResonse, config, db) {
+			w.WriteHeader(200)
+		} else {
+			w.WriteHeader(500)
+		}
 	}
 }
 
@@ -96,11 +128,10 @@ func (s *server) uploadMarkEventCall(config ConfigObj, db DBObj) http.HandlerFun
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
-			log.Printf("error decoding watch response: %v", jsonErr)
-			if e, ok := jsonErr.(*json.SyntaxError); ok {
-				log.Printf("syntax error at byte offset %d", e.Offset)
-			}
-			log.Printf("watch response: %q", body)
+			log.Println("couldn't parse body")
+			log.Println(jsonErr)
+			w.WriteHeader(500)
+			return
 		}
 
 		fmt.Println(parsedResonse.IsReaction)
@@ -118,12 +149,17 @@ func (s *server) uploadBioSamplesCall(config ConfigObj, db DBObj) http.HandlerFu
 		parsedResonse := BioSamplesObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
-			log.Println(body)
+			/*log.Println(body)
 			log.Printf("error decoding watch response: %v", jsonErr)
 			if e, ok := jsonErr.(*json.SyntaxError); ok {
 				log.Printf("syntax error at byte offset %d", e.Offset)
 			}
-			log.Printf("watch response: %q", body)
+			log.Printf("watch response: %q", body)*/
+			log.Println(body)
+			log.Println("couldn't parse body")
+			log.Println(jsonErr)
+			w.WriteHeader(500)
+			return
 		}
 
 		//fmt.Println(parsedResonse)
@@ -144,8 +180,10 @@ func (s *server) uploadSkillCall(config ConfigObj, db DBObj) http.HandlerFunc {
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
-			log.Println("died here")
-			log.Fatal(jsonErr)
+			log.Println("couldn't parse body")
+			log.Println(jsonErr)
+			w.WriteHeader(500)
+			return
 		}
 
 		fmt.Println(parsedResonse)
@@ -164,8 +202,10 @@ func (s *server) uploadReviewCall(config ConfigObj, db DBObj) http.HandlerFunc {
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
-			log.Println("died here")
-			log.Fatal(jsonErr)
+			log.Println("couldn't parse body")
+			log.Println(jsonErr)
+			w.WriteHeader(500)
+			return
 		}
 
 		fmt.Println(parsedResonse)
@@ -184,8 +224,10 @@ func (s *server) uploadScheduledReviewCall(config ConfigObj, db DBObj) http.Hand
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
-			log.Println("died here")
-			log.Fatal(jsonErr)
+			log.Println("couldn't parse body")
+			log.Println(jsonErr)
+			w.WriteHeader(500)
+			return
 		}
 
 		fmt.Println(parsedResonse)
@@ -208,8 +250,10 @@ func (s *server) typerSentFieldCall(config ConfigObj, db DBObj) http.HandlerFunc
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
-			log.Println("died here")
-			log.Fatal(jsonErr)
+			log.Println("couldn't parse body")
+			log.Println(jsonErr)
+			w.WriteHeader(500)
+			return
 		}
 		fmt.Println(parsedResonse)
 		if database.InsertTyperObj(parsedResonse, config, db) {
@@ -243,8 +287,10 @@ func (s *server) messengerSentFieldCall(config ConfigObj, db DBObj) http.Handler
 		jsonErr := json.Unmarshal(body, &parsedResonse)
 		if jsonErr != nil {
 			log.Println(body)
-			log.Println("died here")
-			log.Fatal(jsonErr)
+			log.Println("couldn't parse body")
+			log.Println(jsonErr)
+			w.WriteHeader(500)
+			return
 		}
 		fmt.Println(parsedResonse)
 		//handleSuccess(w, database.InsertMessengerObj(parsedResonse, config, db))
@@ -260,7 +306,7 @@ func (s *server) messengerSentFieldCall(config ConfigObj, db DBObj) http.Handler
 
 func main() {
 	config := config.LoadConfiguration("../configSecrets/server_config.json")
-	fmt.Printf("IsDev: %t \n", config.ServerConfig.IsDev)
+	fmt.Printf("IsDev: %t\n", config.ServerConfig.IsDev)
 	s := server{
 		router: http.NewServeMux(),
 	}
@@ -268,7 +314,7 @@ func main() {
 	db := database.SetupDB(config)
 
 	s.routes(config, db)
-	fmt.Printf("serving on port: %s", config.ServerConfig.Port)
+	fmt.Printf("serving on port: %s\n", config.ServerConfig.Port)
 	log.Fatal(http.ListenAndServe(":"+config.ServerConfig.Port, s.router))
 
 	// write a case to close this connection

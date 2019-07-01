@@ -10,12 +10,12 @@ type BioSamplesObj struct {
 
 // EmotionEvaluationObj describes a received EmotionEvaluation
 type EmotionEvaluationObj struct {
-	EvalDatetime     string `json:"evalDatetime"`
-	AccomplishedEval string `json:"accomplishedEval"`
-	SocialEval       string `json:"socialEval"`
-	ExhaustedEval    string `json:"exhaustedEval"`
-	TiredEval        string `json:"tiredEval"`
-	HappyEval        string `json:"happyEval"`
+	EvalDatetime     uint64 `json:"evalDatetime"`
+	AccomplishedEval int    `json:"accomplishedEval"`
+	SocialEval       int    `json:"socialEval"`
+	ExhaustedEval    int    `json:"exhaustedEval"`
+	TiredEval        int    `json:"tiredEval"`
+	HappyEval        int    `json:"happyEval"`
 	Comments         string `json:"comments"`
 	EvalLocation     string `json:"evalLocation"`
 }
@@ -83,7 +83,7 @@ type TyperObj struct {
 }
 
 type MessengerObj struct {
-	FBID        string `json:"url"`
+	FBID        string `json:"FBID"`
 	Message     string `json:"message"`
 	DeletedText bool   `json:deletedText`
 	TimeSent    uint64 `json:"timeSent"` // int32 should fit but just in case

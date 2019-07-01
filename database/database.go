@@ -5,7 +5,6 @@ import (
 	"fmt"
 	config "github.com/curtischong/lizzie_server/config"
 	network "github.com/curtischong/lizzie_server/network"
-	serverutils "github.com/curtischong/lizzie_server/serverUtils"
 	influx "github.com/influxdata/influxdb/client/v2"
 	"log"
 	"strconv"
@@ -71,6 +70,37 @@ func setupBP(config ConfigObj) influx.BatchPoints {
 	return bp
 }
 
+func GetCards(config ConfigObj, db DBObj) (string, bool) {
+	connectDB(config, &db)
+	defer disconnectDB(&db)
+
+	q := influx.Query{
+		//Command:  fmt.Sprintf("select * from cards where cluster = '%s'", cluster),
+		Command:  fmt.Sprintf("select * from cards ORDER BY time DESC LIMIT 3"),
+		Database: config.DBConfig.DBName,
+	}
+	resp, err := db.DBClient.Query(q)
+	if err != nil {
+		log.Fatal(err)
+		return "", false
+	}
+
+	var cards []string
+	for _, element := range resp.Results[0].Series[0].Values {
+		// element is the element from someSlice for where we are
+		cards = append(cards, element[1].(string))
+	}
+
+	cardsJson, err := json.Marshal(cards)
+	if err != nil {
+		log.Fatal("Cannot encode query result to JSON ", err)
+		return "", false
+	}
+	fmt.Println(string(cardsJson))
+
+	return string(cardsJson), true
+}
+
 func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config ConfigObj, db DBObj) bool {
 	connectDB(config, &db)
 	defer disconnectDB(&db)
@@ -85,7 +115,7 @@ func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config ConfigObj, d
 		"comments":          sample.Comments,
 	}
 
-	pt, err := influx.NewPoint("emotion_evaluations", nil, fields, serverutils.StringToDate(sample.EvalDatetime))
+	pt, err := influx.NewPoint("emotion_evaluations", nil, fields, time.Unix(0, int64(sample.EvalDatetime*1000000)))
 	if err != nil {
 		log.Fatal(err)
 		return false
@@ -333,6 +363,7 @@ func InsertScheduledReviewObj(sample ScheduledReviewObj, config ConfigObj, db DB
 }
 
 func InsertTyperObj(sample TyperObj, config ConfigObj, db DBObj) bool {
+	// NOTE: deleted_text should probably be a tag but tags cannot be bools
 	connectDB(config, &db)
 	defer disconnectDB(&db)
 	bp := setupBP(config)

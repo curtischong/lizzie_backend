@@ -18,8 +18,18 @@
 - Use `flt.printf("stuff %v\n", var)` to print dev-assigned variables
 - Use `log.println(err)` to print general logs
 - Try to use this style to create objects:
-```
+`
 dbObj := DBObj{
   DBConfigObj: config.DBConfig
   DBClient: nil
-}```
+}`
+
+
+# Known Issues
+ - If the DB doesn't say: "Added x!" after "connected to DB after" then it probably didn't connect to the database
+ - diagnostic: run `ifconfig` to see what subnet IP (`inet`) you are on (make sure you are connected to the VPN)
+      - There should be 3 subnet devices: utun0, utun1, utun2
+ - Proposal: Have a statistics card sent in Lizzie Peaks every night or morning that tells you how many server events you fired in the past 24 hours. This is a sanity check so I know that the systems are running
+
+ - This local IP thing is solved for the dev ip bc localhost will never have a different IP.
+ - I think this isn't a problem bc the local ip of the prod server shouldn't change unless of a restart?
