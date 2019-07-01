@@ -96,9 +96,43 @@ func GetCards(config ConfigObj, db DBObj) (string, bool) {
 		log.Fatal("Cannot encode query result to JSON ", err)
 		return "", false
 	}
-	fmt.Println(string(cardsJson))
+	//fmt.Println(string(cardsJson))
 
 	return string(cardsJson), true
+}
+
+func GetPanels(config ConfigObj, db DBObj) (string, bool) {
+	connectDB(config, &db)
+	defer disconnectDB(&db)
+
+	q := influx.Query{
+		Command:  fmt.Sprintf("select * from panels ORDER BY time DESC LIMIT 3"),
+		Database: config.DBConfig.DBName,
+	}
+	resp, err := db.DBClient.Query(q)
+	if err != nil {
+		log.Fatal(err)
+		return "", false
+	}
+
+	var panels []string
+	for _, element := range resp.Results[0].Series[0].Values {
+		// element is the element from someSlice for where we are
+		//TODO: this field is a
+		userDismissed := element[1].(bool)
+		if !userDismissed {
+			panels = append(panels, element[2].(string))
+		}
+	}
+
+	panelsJson, err := json.Marshal(panels)
+	if err != nil {
+		log.Fatal("Cannot encode query result to JSON ", err)
+		return "", false
+	}
+	//fmt.Println(string(panelsJson))
+
+	return string(panelsJson), true
 }
 
 func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config ConfigObj, db DBObj) bool {

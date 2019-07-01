@@ -32,7 +32,7 @@ type MessengerObj = network.MessengerObj
 
 // Watch
 func (s server) routes(config ConfigObj, db DBObj) {
-	s.router.HandleFunc("/get_cards", s.getCardsCall(config, db))
+	s.router.HandleFunc("/get_cards_and_panels", s.getCardsAndPanelsCall(config, db))
 	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall(config, db))
 	s.router.HandleFunc("/messenger_sent_text", s.messengerSentFieldCall(config, db))
 	s.router.HandleFunc("/upload_bio_samples", s.uploadBioSamplesCall(config, db))
@@ -63,14 +63,21 @@ func enableCors(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,access-control-allow-origin, access-control-allow-headers")
 }
 
-func (s *server) getCardsCall(config ConfigObj, db DBObj) http.HandlerFunc {
+func (s *server) getCardsAndPanelsCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		enableCors(w)
-		cards, succ := database.GetCards(config, db)
-		if succ {
-			//TODO: consult with ppl if this is legit
+		cards, cardsSucc := database.GetCards(config, db)
+		panels, panelsSucc := database.GetPanels(config, db)
+		log.Println(panels)
+		log.Println(panelsSucc)
+
+		if cardsSucc && panelsSucc {
+			cardsAndPanelsObj := map[string]string{"cards": cards, "panels": panels}
+			cardsAndPanelsJsonStr, _ := json.Marshal(cardsAndPanelsObj)
+			//TODO: consult with ppl if passing a succ var is legit (instead of an err)
 			// not sure cause I need to process the response
-			w.Write([]byte(cards))
+
+			w.Write([]byte(cardsAndPanelsJsonStr))
 			w.WriteHeader(200)
 		} else {
 			w.WriteHeader(500)
