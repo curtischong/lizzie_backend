@@ -5,6 +5,7 @@ import (
 	"fmt"
 	config "github.com/curtischong/lizzie_server/config"
 	network "github.com/curtischong/lizzie_server/network"
+	utils "github.com/curtischong/lizzie_server/serverUtils"
 	influx "github.com/influxdata/influxdb/client/v2"
 	"log"
 	"strconv"
@@ -22,6 +23,7 @@ type MessengerObj = network.MessengerObj
 
 type DBConfigObj = config.DBConfigObj
 type ConfigObj = config.ConfigObj
+type Time = time.Time
 
 //type Client = influx.Client
 
@@ -70,7 +72,7 @@ func setupBP(config ConfigObj) influx.BatchPoints {
 	return bp
 }
 
-func GetCards(config ConfigObj, db DBObj) (string, bool) {
+func GetCards(config ConfigObj, db DBObj) ([]map[string]string, bool) {
 	connectDB(config, &db)
 	defer disconnectDB(&db)
 
@@ -82,26 +84,22 @@ func GetCards(config ConfigObj, db DBObj) (string, bool) {
 	resp, err := db.DBClient.Query(q)
 	if err != nil {
 		log.Fatal(err)
-		return "", false
+		return nil, false
 	}
 
-	var cards []string
+	var cards []map[string]string
 	for _, element := range resp.Results[0].Series[0].Values {
-		// element is the element from someSlice for where we are
-		cards = append(cards, element[1].(string))
+		cardTimeInUnix := utils.StringToDate(element[0].(string)).Unix()
+		cardJson := map[string]string{"time": strconv.FormatInt(cardTimeInUnix, 10), "card": element[1].(string)}
+		cards = append(cards, cardJson)
 	}
 
-	cardsJson, err := json.Marshal(cards)
-	if err != nil {
-		log.Fatal("Cannot encode query result to JSON ", err)
-		return "", false
-	}
 	//fmt.Println(string(cardsJson))
 
-	return string(cardsJson), true
+	return cards, true
 }
 
-func GetPanels(config ConfigObj, db DBObj) (string, bool) {
+func GetPanels(config ConfigObj, db DBObj) ([]map[string]string, bool) {
 	connectDB(config, &db)
 	defer disconnectDB(&db)
 
@@ -112,27 +110,24 @@ func GetPanels(config ConfigObj, db DBObj) (string, bool) {
 	resp, err := db.DBClient.Query(q)
 	if err != nil {
 		log.Fatal(err)
-		return "", false
+		return nil, false
 	}
 
-	var panels []string
+	var panels []map[string]string
 	for _, element := range resp.Results[0].Series[0].Values {
 		// element is the element from someSlice for where we are
-		//TODO: this field is a
 		userDismissed := element[1].(bool)
 		if !userDismissed {
-			panels = append(panels, element[2].(string))
+			// TODO: get advice from friends - see if I should use a map instead
+			//panelJson := "[" + element[0].(string) + "," + element[2].(string) + "]"
+			panelTimeInUnix := utils.StringToDate(element[0].(string)).Unix()
+			panelJson := map[string]string{"time": strconv.FormatInt(panelTimeInUnix, 10), "panel": element[2].(string)}
+			panels = append(panels, panelJson)
 		}
 	}
+	//fmt.Println(string(allPanelsJson))
 
-	panelsJson, err := json.Marshal(panels)
-	if err != nil {
-		log.Fatal("Cannot encode query result to JSON ", err)
-		return "", false
-	}
-	//fmt.Println(string(panelsJson))
-
-	return string(panelsJson), true
+	return panels, true
 }
 
 func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config ConfigObj, db DBObj) bool {
@@ -424,6 +419,7 @@ func InsertTyperObj(sample TyperObj, config ConfigObj, db DBObj) bool {
 	return true
 }
 
+//TODO: maybe have a tag that says if I sent somebody a photo or a file bc those messages don't have text
 func InsertMessengerObj(sample MessengerObj, config ConfigObj, db DBObj) bool {
 	connectDB(config, &db)
 	defer disconnectDB(&db)

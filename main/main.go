@@ -68,17 +68,15 @@ func (s *server) getCardsAndPanelsCall(config ConfigObj, db DBObj) http.HandlerF
 		enableCors(w)
 		cards, cardsSucc := database.GetCards(config, db)
 		panels, panelsSucc := database.GetPanels(config, db)
-		log.Println(panels)
-		log.Println(panelsSucc)
+		//log.Println(panelsSucc)
 
 		if cardsSucc && panelsSucc {
-			cardsAndPanelsObj := map[string]string{"cards": cards, "panels": panels}
+			cardsAndPanelsObj := map[string][]map[string]string{"cards": cards, "panels": panels}
 			cardsAndPanelsJsonStr, _ := json.Marshal(cardsAndPanelsObj)
 			//TODO: consult with ppl if passing a succ var is legit (instead of an err)
 			// not sure cause I need to process the response
 
 			w.Write([]byte(cardsAndPanelsJsonStr))
-			w.WriteHeader(200)
 		} else {
 			w.WriteHeader(500)
 		}
