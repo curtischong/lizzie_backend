@@ -84,11 +84,11 @@ func connectDB(config ConfigObj) *sql.DB {
 	return db
 }
 
-func PrintQuery(config ConfigObj) {
+func PrintQuery(config ConfigObj, query string) {
 	db := connectDB(config)
 	defer db.Close()
 
-	rows, err := db.Query(`SELECT * FROM pg_catalog.pg_tables;`)
+	rows, err := db.Query(query)
 	if err != nil {
 		fmt.Println("Failed to run query", err)
 		return
@@ -149,7 +149,6 @@ func GetCards(config ConfigObj) ([]map[string]string, bool) {
 			log.Fatal(err)
 			return cards, false
 		}
-		//cardJson := map[string]string{"unixt": strconv.Itoa(unixt), "card": card}
 		cardJson := map[string]string{"unixt": unixt, "card": card}
 		cards = append(cards, cardJson)
 	}
@@ -185,8 +184,7 @@ func GetPanels(config ConfigObj) ([]map[string]string, bool) {
 			log.Fatal(err)
 			return panels, false
 		}
-		//cardJson := map[string]string{"unixt": strconv.Itoa(unixt), "card": card}
-		panelJson := map[string]string{"unixt": unixt, "dismissed": dismissed, "card": panel}
+		panelJson := map[string]string{"unixt": unixt, "dismissed": dismissed, "panel": panel}
 		panels = append(panels, panelJson)
 	}
 	// get any error encountered during iteration

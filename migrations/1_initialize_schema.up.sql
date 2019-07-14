@@ -33,7 +33,7 @@ create table lnews.card (
 create table lnews.panel (
   unixt bigint not null,
   ts timestamp not null,
-  dismissed boolean not null,
+  dismissed boolean not null default false,
   panel text not null
 );
 

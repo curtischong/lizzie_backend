@@ -17,4 +17,4 @@ How to handle time
 
 How to run Migrations:
 `brew install golang-migrate`
-`migrate -path /migrations -database postgres://localhost:5432/lizzie?sslmode=disable up`
+`migrate -path migrations/ -database postgres://localhost:5432/lizzie?sslmode=disable up`
