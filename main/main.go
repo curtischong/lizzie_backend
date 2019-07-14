@@ -8,6 +8,7 @@ import (
 	config "github.com/curtischong/lizzie_server/config"
 	database "github.com/curtischong/lizzie_server/database"
 	network "github.com/curtischong/lizzie_server/network"
+	utils "github.com/curtischong/lizzie_server/serverUtils"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -17,20 +18,41 @@ type server struct {
 	router *http.ServeMux
 }
 
+// General
+
 type DBConfigObj = database.DBConfigObj
 type ConfigObj = config.ConfigObj
 type DBObj = database.DBObj
-type EmotionEvaluationObj = network.EmotionEvaluationObj
-type EmotionEvaluationNetworkObj = network.EmotionEvaluationNetworkObj
-type BioSamplesObj = network.BioSamplesObj
-type MarkEventObj = network.MarkEventObj
-type SkillObj = network.SkillObj
-type ReviewObj = network.ReviewObj
-type ScheduledReviewObj = network.ScheduledReviewObj
+
+// Typer
+
 type TyperObj = network.TyperObj
 type MessengerObj = network.MessengerObj
 
-// Watch
+// LNews
+
+type GetCardsAndPanelsObj = network.GetCardsAndPanelsObj
+
+// BioSamplesObj
+
+type BioSamplesObj = network.BioSamplesObj
+
+// Emotions
+
+type EmotionEvaluationObj = network.EmotionEvaluationObj
+type EmotionEvaluationNetworkObj = network.EmotionEvaluationNetworkObj
+
+// Events
+
+type MarkEventObj = network.MarkEventObj
+
+// Lizzie Peaks
+
+type SkillObj = network.SkillObj
+type ReviewObj = network.ReviewObj
+type ScheduledReviewObj = network.ScheduledReviewObj
+
+// TODO: think about standardizing these endpoint names
 func (s server) routes(config ConfigObj) {
 	s.router.HandleFunc("/get_cards_and_panels", s.getCardsAndPanelsCall(config))
 	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall(config))
@@ -57,49 +79,40 @@ func getResponseBody(w http.ResponseWriter, response *http.Request) []byte {
 	return body
 }
 
-func enableCors(w http.ResponseWriter) {
+func enableCors(w http.ResponseWriter, response *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=ascii")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,access-control-allow-origin, access-control-allow-headers")
+	if response.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+	}
+	return
 }
 
 func (s *server) getCardsAndPanelsCall(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
-		enableCors(w)
-		cards, cardsSucc := database.GetCards(config)
-		panels, panelsSucc := database.GetPanels(config)
+		enableCors(w, response)
+
+		q := response.URL.Query()
+		parsedResonse := GetCardsAndPanelsObj{
+			CardAmount:  utils.BetterAtoi(q.Get("cardAmount")),
+			CardOffset:  utils.BetterAtoi(q.Get("cardOffset")),
+			PanelAmount: utils.BetterAtoi(q.Get("panelAmount")),
+			PanelOffset: utils.BetterAtoi(q.Get("panelOffset")),
+		}
+
+		cards, cardsSucc := database.GetCards(parsedResonse, config)
+		panels, panelsSucc := database.GetPanels(parsedResonse, config)
 		//log.Println(panelsSucc)
 
 		if cardsSucc && panelsSucc {
 			cardsAndPanelsObj := map[string][]map[string]string{"cards": cards, "panels": panels}
-			log.Println(cardsAndPanelsObj)
 			cardsAndPanelsJsonStr, _ := json.Marshal(cardsAndPanelsObj)
 
 			w.Write([]byte(cardsAndPanelsJsonStr))
 		} else {
 			w.WriteHeader(500)
 		}
-
-		/*
-			body := getResponseBody(w, response)
-			parsedResonse := EmotionEvaluationObj{}
-			jsonErr := json.Unmarshal(body, &parsedResonse)
-			if jsonErr != nil {
-				log.Println(body)
-				log.Printf("error decoding emotion evaluation response: %v", jsonErr)
-				if e, ok := jsonErr.(*json.SyntaxError); ok {
-					log.Printf("syntax error at byte offset %d", e.Offset)
-				}
-				log.Printf("watch response: %q", body)
-			}
-			fmt.Println(parsedResonse)*/
-
-		/*
-			if database.InsertEmotionEvaluationObj(parsedResonse, config, db) {
-				w.WriteHeader(200)
-			} else {
-				w.WriteHeader(500)
-			}*/
 	}
 }
 
