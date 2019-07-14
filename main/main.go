@@ -31,16 +31,16 @@ type TyperObj = network.TyperObj
 type MessengerObj = network.MessengerObj
 
 // Watch
-func (s server) routes(config ConfigObj, db DBObj) {
-	s.router.HandleFunc("/get_cards_and_panels", s.getCardsAndPanelsCall(config, db))
-	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall(config, db))
-	s.router.HandleFunc("/messenger_sent_text", s.messengerSentFieldCall(config, db))
-	s.router.HandleFunc("/upload_bio_samples", s.uploadBioSamplesCall(config, db))
-	s.router.HandleFunc("/upload_emotion_evaluation", s.uploadEmotionEvaluationCall(config, db))
-	s.router.HandleFunc("/upload_mark_event", s.uploadMarkEventCall(config, db))
-	s.router.HandleFunc("/upload_skill", s.uploadSkillCall(config, db))
-	s.router.HandleFunc("/upload_review", s.uploadReviewCall(config, db))
-	s.router.HandleFunc("/upload_scheduled_review", s.uploadScheduledReviewCall(config, db))
+func (s server) routes(config ConfigObj) {
+	s.router.HandleFunc("/get_cards_and_panels", s.getCardsAndPanelsCall(config))
+	s.router.HandleFunc("/typer_sent_field", s.typerSentFieldCall(config))
+	s.router.HandleFunc("/messenger_sent_text", s.messengerSentFieldCall(config))
+	s.router.HandleFunc("/upload_bio_samples", s.uploadBioSamplesCall(config))
+	s.router.HandleFunc("/upload_emotion_evaluation", s.uploadEmotionEvaluationCall(config))
+	s.router.HandleFunc("/upload_mark_event", s.uploadMarkEventCall(config))
+	s.router.HandleFunc("/upload_skill", s.uploadSkillCall(config))
+	s.router.HandleFunc("/upload_review", s.uploadReviewCall(config))
+	s.router.HandleFunc("/upload_scheduled_review", s.uploadScheduledReviewCall(config))
 	//s.router.HandleFunc("/admin", s.adminOnly(s.handleAdminIndex()))
 }
 
@@ -63,18 +63,17 @@ func enableCors(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,access-control-allow-origin, access-control-allow-headers")
 }
 
-func (s *server) getCardsAndPanelsCall(config ConfigObj, db DBObj) http.HandlerFunc {
+func (s *server) getCardsAndPanelsCall(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		enableCors(w)
-		cards, cardsSucc := database.GetCards(config, db)
-		panels, panelsSucc := database.GetPanels(config, db)
+		cards, cardsSucc := database.GetCards(config)
+		panels, panelsSucc := database.GetPanels(config)
 		//log.Println(panelsSucc)
 
 		if cardsSucc && panelsSucc {
 			cardsAndPanelsObj := map[string][]map[string]string{"cards": cards, "panels": panels}
+			log.Println(cardsAndPanelsObj)
 			cardsAndPanelsJsonStr, _ := json.Marshal(cardsAndPanelsObj)
-			//TODO: consult with ppl if passing a succ var is legit (instead of an err)
-			// not sure cause I need to process the response
 
 			w.Write([]byte(cardsAndPanelsJsonStr))
 		} else {
@@ -104,7 +103,7 @@ func (s *server) getCardsAndPanelsCall(config ConfigObj, db DBObj) http.HandlerF
 	}
 }
 
-func (s *server) uploadEmotionEvaluationCall(config ConfigObj, db DBObj) http.HandlerFunc {
+func (s *server) uploadEmotionEvaluationCall(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		parsedResonse := EmotionEvaluationObj{}
@@ -118,7 +117,7 @@ func (s *server) uploadEmotionEvaluationCall(config ConfigObj, db DBObj) http.Ha
 		}
 		fmt.Println(parsedResonse)
 
-		if database.InsertEmotionEvaluationObj(parsedResonse, config, db) {
+		if database.InsertEmotionEvaluationObj(parsedResonse, config) {
 			w.WriteHeader(200)
 		} else {
 			w.WriteHeader(500)
@@ -126,7 +125,7 @@ func (s *server) uploadEmotionEvaluationCall(config ConfigObj, db DBObj) http.Ha
 	}
 }
 
-func (s *server) uploadMarkEventCall(config ConfigObj, db DBObj) http.HandlerFunc {
+func (s *server) uploadMarkEventCall(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		parsedResonse := MarkEventObj{}
@@ -141,14 +140,14 @@ func (s *server) uploadMarkEventCall(config ConfigObj, db DBObj) http.HandlerFun
 
 		fmt.Println(parsedResonse.IsReaction)
 
-		if database.InsertMarkEventObj(parsedResonse, config, db) {
+		if database.InsertMarkEventObj(parsedResonse, config) {
 			w.WriteHeader(200)
 		} else {
 			w.WriteHeader(500)
 		}
 	}
 }
-func (s *server) uploadBioSamplesCall(config ConfigObj, db DBObj) http.HandlerFunc {
+func (s *server) uploadBioSamplesCall(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		parsedResonse := BioSamplesObj{}
@@ -170,7 +169,7 @@ func (s *server) uploadBioSamplesCall(config ConfigObj, db DBObj) http.HandlerFu
 		//fmt.Println(parsedResonse)
 		fmt.Fprintf(w, "bio snapshot")
 
-		if database.InsertBioSamplesObj(parsedResonse, config, db) {
+		if database.InsertBioSamplesObj(parsedResonse, config) {
 			w.WriteHeader(200)
 		} else {
 			w.WriteHeader(500)
@@ -178,7 +177,7 @@ func (s *server) uploadBioSamplesCall(config ConfigObj, db DBObj) http.HandlerFu
 	}
 }
 
-func (s *server) uploadSkillCall(config ConfigObj, db DBObj) http.HandlerFunc {
+func (s *server) uploadSkillCall(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		parsedResonse := SkillObj{}
@@ -192,7 +191,7 @@ func (s *server) uploadSkillCall(config ConfigObj, db DBObj) http.HandlerFunc {
 		}
 
 		fmt.Println(parsedResonse)
-		if database.InsertSkillObj(parsedResonse, config, db) {
+		if database.InsertSkillObj(parsedResonse, config) {
 			w.WriteHeader(200)
 		} else {
 			w.WriteHeader(500)
@@ -200,7 +199,7 @@ func (s *server) uploadSkillCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	}
 }
 
-func (s *server) uploadReviewCall(config ConfigObj, db DBObj) http.HandlerFunc {
+func (s *server) uploadReviewCall(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		parsedResonse := ReviewObj{}
@@ -214,7 +213,7 @@ func (s *server) uploadReviewCall(config ConfigObj, db DBObj) http.HandlerFunc {
 		}
 
 		fmt.Println(parsedResonse)
-		if database.InsertReviewObj(parsedResonse, config, db) {
+		if database.InsertReviewObj(parsedResonse, config) {
 			w.WriteHeader(200)
 		} else {
 			w.WriteHeader(500)
@@ -222,7 +221,7 @@ func (s *server) uploadReviewCall(config ConfigObj, db DBObj) http.HandlerFunc {
 	}
 }
 
-func (s *server) uploadScheduledReviewCall(config ConfigObj, db DBObj) http.HandlerFunc {
+func (s *server) uploadScheduledReviewCall(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		parsedResonse := ScheduledReviewObj{}
@@ -236,7 +235,7 @@ func (s *server) uploadScheduledReviewCall(config ConfigObj, db DBObj) http.Hand
 		}
 
 		fmt.Println(parsedResonse)
-		if database.InsertScheduledReviewObj(parsedResonse, config, db) {
+		if database.InsertScheduledReviewObj(parsedResonse, config) {
 			w.WriteHeader(200)
 		} else {
 			w.WriteHeader(500)
@@ -244,7 +243,7 @@ func (s *server) uploadScheduledReviewCall(config ConfigObj, db DBObj) http.Hand
 	}
 }
 
-func (s *server) typerSentFieldCall(config ConfigObj, db DBObj) http.HandlerFunc {
+func (s *server) typerSentFieldCall(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		// NOTE: do not remove this line. Very good to debug incorrect encoding types from client
@@ -261,7 +260,7 @@ func (s *server) typerSentFieldCall(config ConfigObj, db DBObj) http.HandlerFunc
 			return
 		}
 		fmt.Println(parsedResonse)
-		if database.InsertTyperObj(parsedResonse, config, db) {
+		if database.InsertTyperObj(parsedResonse, config) {
 			w.WriteHeader(200)
 		} else {
 			w.WriteHeader(500)
@@ -281,7 +280,7 @@ func handleSuccess(w http.ResponseWriter, success bool) {
 	}
 }*/
 
-func (s *server) messengerSentFieldCall(config ConfigObj, db DBObj) http.HandlerFunc {
+func (s *server) messengerSentFieldCall(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)
 		// NOTE: do not remove this line. Very good to debug incorrect encoding types from client
@@ -301,7 +300,7 @@ func (s *server) messengerSentFieldCall(config ConfigObj, db DBObj) http.Handler
 		//handleSuccess(w, database.InsertMessengerObj(parsedResonse, config, db))
 
 		//w.Header().Set("Content-Type", "application/json")
-		if database.InsertMessengerObj(parsedResonse, config, db) {
+		if database.InsertMessengerObj(parsedResonse, config) {
 			w.WriteHeader(200)
 		} else {
 			w.WriteHeader(500)
@@ -316,13 +315,9 @@ func main() {
 		router: http.NewServeMux(),
 	}
 
-	db := database.SetupDB(config)
+	database.SetupDBConfig(&config)
 
-	s.routes(config, db)
+	s.routes(config)
 	fmt.Printf("serving on port: %s\n", config.ServerConfig.Port)
 	log.Fatal(http.ListenAndServe(":"+config.ServerConfig.Port, s.router))
-
-	// write a case to close this connection
-	//database.closeDBConnection(&DBObj.dbClient)
-
 }

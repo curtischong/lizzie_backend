@@ -17,7 +17,6 @@ type EmotionEvaluationObj struct {
 	TiredEval        int    `json:"tiredEval"`
 	HappyEval        int    `json:"happyEval"`
 	Comments         string `json:"comments"`
-	EvalLocation     string `json:"evalLocation"`
 }
 
 // EmotionEvaluationNetworkObj describes a received EmotionEvaluation from the network

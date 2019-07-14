@@ -14,3 +14,7 @@ How to handle time
   - Use singular table names. Many reasons on SO
   - Use singular column names.
   - Don't use camelCase use snake_case bc we don't want accidents with double quotes
+
+How to run Migrations:
+`brew install golang-migrate`
+`migrate -path /migrations -database postgres://localhost:5432/lizzie?sslmode=disable up`
