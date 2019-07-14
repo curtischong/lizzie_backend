@@ -8,7 +8,7 @@ import (
 	config "github.com/curtischong/lizzie_server/config"
 	database "github.com/curtischong/lizzie_server/database"
 	network "github.com/curtischong/lizzie_server/network"
-	utils "github.com/curtischong/lizzie_server/serverUtils"
+	utils "github.com/curtischong/lizzie_server/util"
 	"io/ioutil"
 	"log"
 	"net/http"

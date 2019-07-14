@@ -1,5 +1,34 @@
 package network
 
+// Typer
+
+// TyperObj describes text I sent
+type TyperObj struct {
+	Url         string `json:"url"`
+	Text        string `json:"text"`
+	DeletedText bool   `json:deletedText`
+	TimeSent    uint64 `json:"timeSent"` // int32 should fit but just in case
+}
+
+// MessengerObj describes the messages I sent
+type MessengerObj struct {
+	FBID        string `json:"FBID"`
+	Message     string `json:"message"`
+	DeletedText bool   `json:deletedText`
+	TimeSent    uint64 `json:"timeSent"` // int32 should fit but just in case
+}
+
+// LNews
+
+type GetCardsAndPanelsObj struct {
+	CardAmount  int `json:"cardAmount"`
+	CardOffset  int `json:"cardOffset"`
+	PanelAmount int `json:"panelAmount"`
+	PanelOffset int `json:"panelOffset"`
+}
+
+// BioSamples
+
 // BioSamplesObj describes a received BioSample
 type BioSamplesObj struct {
 	DataPointNames string `json:"dataPointNames"`
@@ -7,6 +36,8 @@ type BioSamplesObj struct {
 	EndTimes       string `json:"endTimes"`
 	Measurements   string `json:"measurements"`
 }
+
+// Emotions
 
 // EmotionEvaluationObj describes a received EmotionEvaluation
 type EmotionEvaluationObj struct {
@@ -34,6 +65,8 @@ type EmotionEvaluationSliderObj struct {
 	EvalTime string `json:evalTime` // TODO: update API on clients to send this
 }
 
+// Events
+
 // MarkEventObj describes a received MarkEvent
 type MarkEventObj struct {
 	TimeOfMark           string `json:"timeOfMark"`
@@ -45,6 +78,8 @@ type MarkEventObj struct {
 	Comments             string `json:"comments"`
 	TypeBiometricsViewed string `json:"typeBiometricsViewed"`
 }
+
+// Lizzie Peaks
 
 // SkillObj describes a received Skill
 type SkillObj struct {
@@ -71,19 +106,4 @@ type ScheduledReviewObj struct {
 	TimeLearned       string `json:"timeLearned"`
 	ScheduledDate     string `json:"scheduledDate"`
 	ScheduledDuration string `json:"scheduledDuration"`
-}
-
-// TyperObj describes text I sent
-type TyperObj struct {
-	Url         string `json:"url"`
-	Text        string `json:"text"`
-	DeletedText bool   `json:deletedText`
-	TimeSent    uint64 `json:"timeSent"` // int32 should fit but just in case
-}
-
-type MessengerObj struct {
-	FBID        string `json:"FBID"`
-	Message     string `json:"message"`
-	DeletedText bool   `json:deletedText`
-	TimeSent    uint64 `json:"timeSent"` // int32 should fit but just in case
 }

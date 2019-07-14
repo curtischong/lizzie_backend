@@ -36,6 +36,8 @@ type ScheduledReviewObj = network.ScheduledReviewObj
 type TyperObj = network.TyperObj
 type MessengerObj = network.MessengerObj
 
+type GetCardsAndPanelsObj = network.GetCardsAndPanelsObj
+
 type DBConfigObj = config.DBConfigObj
 type ConfigObj = config.ConfigObj
 type Time = time.Time
@@ -129,13 +131,14 @@ func PrintQuery(config ConfigObj, query string) {
 
 }
 
-func GetCards(config ConfigObj) ([]map[string]string, bool) {
+func GetCards(getCardsAndPanelsObj GetCardsAndPanelsObj, config ConfigObj) ([]map[string]string, bool) {
 	db := connectDB(config)
 	defer db.Close()
 
 	var cards = make([]map[string]string, 0)
 
-	rows, err := db.Query(`select unixt, card from lnews.card ORDER BY unixt DESC LIMIT 3`)
+	getCardsQuery := `select unixt, card from lnews.card ORDER BY unixt DESC LIMIT $1 offset $2`
+	rows, err := db.Query(getCardsQuery, getCardsAndPanelsObj.CardAmount, getCardsAndPanelsObj.CardOffset)
 	if err != nil {
 		log.Fatal(err)
 		return cards, false
@@ -163,13 +166,13 @@ func GetCards(config ConfigObj) ([]map[string]string, bool) {
 	return cards, true
 }
 
-func GetPanels(config ConfigObj) ([]map[string]string, bool) {
+func GetPanels(getCardsAndPanelsObj GetCardsAndPanelsObj, config ConfigObj) ([]map[string]string, bool) {
 	db := connectDB(config)
 	defer db.Close()
 
 	var panels = make([]map[string]string, 0)
-
-	rows, err := db.Query(`select unixt, dismissed, panel from lnews.panel ORDER BY unixt DESC LIMIT 3`)
+	getPanelsQuery := `select unixt, dismissed, panel from lnews.panel ORDER BY unixt DESC LIMIT $1 offset $2`
+	rows, err := db.Query(getPanelsQuery, getCardsAndPanelsObj.PanelAmount, getCardsAndPanelsObj.PanelOffset)
 	if err != nil {
 		log.Fatal(err)
 		return panels, false
