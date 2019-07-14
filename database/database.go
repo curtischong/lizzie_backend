@@ -84,6 +84,51 @@ func connectDB(config ConfigObj) *sql.DB {
 	return db
 }
 
+func PrintQuery(config ConfigObj) {
+	db := connectDB(config)
+	defer db.Close()
+
+	rows, err := db.Query(`SELECT * FROM pg_catalog.pg_tables;`)
+	if err != nil {
+		fmt.Println("Failed to run query", err)
+		return
+	}
+
+	cols, err := rows.Columns()
+	if err != nil {
+		fmt.Println("Failed to get columns", err)
+		return
+	}
+
+	// Result is your slice string.
+	rawResult := make([][]byte, len(cols))
+	result := make([]string, len(cols))
+
+	dest := make([]interface{}, len(cols)) // A temporary interface{} slice
+	for i, _ := range rawResult {
+		dest[i] = &rawResult[i] // Put pointers to each string in the interface slice
+	}
+
+	for rows.Next() {
+		err = rows.Scan(dest...)
+		if err != nil {
+			fmt.Println("Failed to scan row", err)
+			return
+		}
+
+		for i, raw := range rawResult {
+			if raw == nil {
+				result[i] = "\\N"
+			} else {
+				result[i] = string(raw)
+			}
+		}
+
+		fmt.Printf("%#v\n", result)
+	}
+
+}
+
 func GetCards(config ConfigObj) ([]map[string]string, bool) {
 	db := connectDB(config)
 	defer db.Close()
