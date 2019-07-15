@@ -1,4 +1,16 @@
-How to handle time
+### Quickstart
+
+Setup the user that will be talking to the db:
+`createuser --interactive --pwprompt`
+
+### How to run Migrations:
+`brew install golang-migrate`
+`migrate -path migrations/ -database postgres://localhost:5432/lizzie?sslmode=disable up n_migrations`
+
+### What happens when you get a dirty migration?
+run `migrate -path migrations/ -database postgres://localhost:5432/lizzie?sslmode=disable force n_latest_migration`
+
+### How to handle time
 - For tables that are frequently used:
   - Store unix time as `unixt`
 - For other tables:
@@ -10,11 +22,8 @@ How to handle time
     - Isn't as universal as unix time
 -  Store `unixt` up to millisecond precision as a `bigInt` data type
 
- Table naming convention:
+### Table naming convention:
   - Use singular table names. Many reasons on SO
   - Use singular column names.
   - Don't use camelCase use snake_case bc we don't want accidents with double quotes
 
-How to run Migrations:
-`brew install golang-migrate`
-`migrate -path migrations/ -database postgres://localhost:5432/lizzie?sslmode=disable up`

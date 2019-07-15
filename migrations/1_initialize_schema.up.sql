@@ -3,6 +3,7 @@ create schema lnews;
 create schema bio;
 create schema emotion;
 create schema life_event;
+create schema peaks;
 
 -- Typer
 
@@ -82,4 +83,35 @@ create table life_event.mark (
   sad boolean not null,
   surprise boolean not null,
   comment text
+);
+
+-- Lizzie Peaks
+
+create table peaks.skill (
+  time_learned_unixt bigint not null,
+  time_learned_ts timestamp not null,
+  time_spent_learning int not null,
+  concept text not null,
+  new_learnings text not null,
+  old_skills text not null,
+  percent_new smallint not null
+);
+
+create table peaks.review (
+  time_learned_unixt bigint not null,
+  time_learned_ts timestamp not null,
+  time_reviewed_unixt bigint not null,
+  time_reviewed_ts bigint not null,
+  concept text not null,
+  new_learnings text not null,
+  time_spent_reviewing int not null
+);
+
+create table peaks.scheduled_review (
+  time_learned_unixt bigint not null,
+  time_learned_ts timestamp not null,
+  time_scheduled_unixt bigint not null,
+  time_scheduled_ts timestamp not null,
+  concept text not null,
+  scheduled_duration int not null
 );

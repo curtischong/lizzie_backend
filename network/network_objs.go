@@ -82,28 +82,32 @@ type MarkEventObj struct {
 // Lizzie Peaks
 
 // SkillObj describes a received Skill
+// Time learned is when you press new learning on the app
+// it's not time started learning
+// remember that it can take multiple days to learn so
+// that's why we have timeSpentLearning not timeStartLearning
 type SkillObj struct {
+	TimeLearned       string `json:"timeLearned"`       // represent to 2 decimal places (smallint) (0-10,000)
+	TimeSpentLearning string `json:"timeSpentLearning"` // represent in seconds (int)
 	Concept           string `json:"concept"`
 	NewLearnings      string `json:"newLearnings"`
 	OldSkills         string `json:"oldSkills"`
 	PercentNew        string `json:"percentNew"`
-	TimeLearned       string `json:"timeLearned"`
-	TimeSpentLearning string `json:"timeSpentLearning"`
 }
 
 // ReviewObj describes a received Review
 type ReviewObj struct {
-	Concept        string `json:"concept"`
-	DateReviewed   string `json:"dateReviewed"`
-	NewLearnings   string `json:"newLearnings"`
-	ReviewDuration string `json:"reviewDuration"`
-	TimeLearned    string `json:"timeLearned"`
+	TimeLearned        string `json:"timeLearned"`
+	TimeReviewed       string `json:"timeReviewed"`
+	Concept            string `json:"concept"`
+	NewLearnings       string `json:"newLearnings"`
+	TimeSpentReviewing string `json:"timeSpentReviewing"` // represent in seconds (int)
 }
 
 // ScheduledReviewObj describes a received scheduledReview
 type ScheduledReviewObj struct {
-	Concept           string `json:"concept"`
 	TimeLearned       string `json:"timeLearned"`
-	ScheduledDate     string `json:"scheduledDate"`
-	ScheduledDuration string `json:"scheduledDuration"`
+	TimeScheduled     string `json:"timeScheduled"`
+	Concept           string `json:"concept"`
+	ScheduledDuration string `json:"scheduleDuration"`
 }
