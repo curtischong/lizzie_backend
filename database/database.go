@@ -498,25 +498,12 @@ func InsertMessengerObj(sample MessengerObj, config ConfigObj) bool {
 	db := connectDB(config)
 	defer db.Close()
 
-	/*fields := map[string]interface{}{
-		"fbid":         sample.FBID,
-		"message":      sample.Message,
-		"deleted_text": sample.DeletedText,
+	getCardsQuery := `insert into typer.messenger (unixt, ts, deleted_text, fbid, message) values($1, $2, $3, $4, $5)`
+	_, err := db.Exec(getCardsQuery, sample.Unixt, sample.Ts, sample.DeletedText, sample.FBID, sample.Message)
+
+	if err != nil {
+		log.Fatal(err)
+		return false
 	}
-
-	/*
-		pt, err := influx.NewPoint("messenger_text", nil, fields, time.Unix(0, int64(sample.TimeSent*1000000)))
-		if err != nil {
-			log.Fatal(err)
-			return false
-		}
-		bp.AddPoint(pt)
-
-		// write the batch
-		if err := db.DBClient.Write(bp); err != nil {
-			log.Fatal(err)
-			return false
-		}
-		log.Printf("added TyperObj!")*/
 	return true
 }
