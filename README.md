@@ -1,6 +1,6 @@
 # How to run
 `cd main`
-`go build -o main.o && ./main`
+`go build -o main.o && ./main.o`
 important because we don't want executables in the git history. the gitignore ignores all .o files
 # Style guide
 

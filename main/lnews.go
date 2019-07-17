@@ -1,3 +1,7 @@
+// useful links
+//https://medium.com/statuscode/how-i-write-go-http-services-after-seven-years-37c208122831
+//https://blog.questionable.services/article/testing-http-handlers-go/
+
 package main
 
 import (

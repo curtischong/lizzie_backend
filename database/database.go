@@ -468,28 +468,14 @@ func InsertScheduledReviewObj(sample ScheduledReviewObj, config ConfigObj) bool 
 func InsertTyperObj(sample TyperObj, config ConfigObj) bool {
 	db := connectDB(config)
 	defer db.Close()
-	// NOTE: deleted_text should probably be a tag but tags cannot be bools
 
-	/*fields := map[string]interface{}{
-		"url":          sample.Url,
-		"text":         sample.Text,
-		"deleted_text": sample.DeletedText,
+	insertTyperObj := `insert into typer.text_box (unixt, ts, deleted_text, url, sent_text) values($1, $2, $3, $4, $5)`
+	_, err := db.Exec(insertTyperObj, sample.Unixt, sample.Ts, sample.DeletedText, sample.Url, sample.SentText)
+
+	if err != nil {
+		log.Fatal(err)
+		return false
 	}
-
-	/*
-		pt, err := influx.NewPoint("typer_text", nil, fields, time.Unix(0, int64(sample.TimeSent*1000000)))
-		if err != nil {
-			log.Fatal(err)
-			return false
-		}
-		bp.AddPoint(pt)
-
-		// write the batch
-		if err := db.DBClient.Write(bp); err != nil {
-			log.Fatal(err)
-			return false
-		}
-		log.Printf("added TyperObj!")*/
 	return true
 }
 
@@ -498,8 +484,8 @@ func InsertMessengerObj(sample MessengerObj, config ConfigObj) bool {
 	db := connectDB(config)
 	defer db.Close()
 
-	getCardsQuery := `insert into typer.messenger (unixt, ts, deleted_text, fbid, message) values($1, $2, $3, $4, $5)`
-	_, err := db.Exec(getCardsQuery, sample.Unixt, sample.Ts, sample.DeletedText, sample.FBID, sample.Message)
+	insertMessengerObj := `insert into typer.messenger (unixt, ts, deleted_text, fbid, message) values($1, $2, $3, $4, $5)`
+	_, err := db.Exec(insertMessengerObj, sample.Unixt, sample.Ts, sample.DeletedText, sample.FBID, sample.Message)
 
 	if err != nil {
 		log.Fatal(err)

@@ -1,21 +1,27 @@
 package network
 
+import (
+	"time"
+)
+
 // Typer
 
 // TyperObj describes text I sent
 type TyperObj struct {
-	Url         string `json:"url"`
-	Text        string `json:"text"`
-	DeletedText bool   `json:deletedText`
-	TimeSent    uint64 `json:"timeSent"` // int32 should fit but just in case
+	Unixt       int64     `json:unixt`
+	Ts          time.Time `json:ts`
+	DeletedText bool      `json:deletedText`
+	Url         string    `json:"url"`
+	SentText    string    `json:"sentText"`
 }
 
 // MessengerObj describes the messages I sent
 type MessengerObj struct {
-	FBID        string `json:"FBID"`
-	Message     string `json:"message"`
-	DeletedText bool   `json:deletedText`
-	TimeSent    uint64 `json:"timeSent"` // int32 should fit but just in case
+	Unixt       int64     `json:unixt`
+	Ts          time.Time `json:ts`
+	DeletedText bool      `json:deletedText`
+	FBID        string    `json:"FBID"`
+	Message     string    `json:"message"`
 }
 
 // LNews
