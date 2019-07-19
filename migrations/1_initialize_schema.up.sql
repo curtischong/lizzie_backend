@@ -63,8 +63,8 @@ create table emotion.evaluation(
 
 -- The emotion columns describe how I felt afterwards
 create table life_event.mark (
-  unixt bigint not null,
-  ts timestamp not null,
+  mark_unixt bigint not null,
+  mark_ts timestamp not null,
 
   anticipate boolean not null,
   start_unixt bigint not null,
@@ -74,14 +74,14 @@ create table life_event.mark (
   end_unixt bigint not null,
   end_ts timestamp not null,
 
-  anger boolean not null,
-  contempt boolean not null,
-  disgust boolean not null,
-  fear boolean not null,
-  interest boolean not null,
-  joy boolean not null,
-  sad boolean not null,
-  surprise boolean not null,
+  anger smallint not null,
+  contempt smallint not null,
+  disgust smallint not null,
+  fear smallint not null,
+  interest smallint not null,
+  joy smallint not null,
+  sad smallint not null,
+  surprise smallint not null,
   comment text
 );
 

@@ -75,14 +75,20 @@ type EmotionEvaluationSliderObj struct {
 
 // MarkEventObj describes a received MarkEvent
 type MarkEventObj struct {
-	TimeOfMark           string `json:"timeOfMark"`
-	IsReaction           string `json:"isReaction"`
-	AnticipationStart    string `json:"anticipationStart"`
-	TimeOfEvent          string `json:"timeOfEvent"`
-	ReactionEnd          string `json:"reactionEnd"`
-	EmotionsFelt         string `json:"emotionsFelt"`
-	Comments             string `json:"comments"`
-	TypeBiometricsViewed string `json:"typeBiometricsViewed"`
+	MarkTime   string `json:"markTime"`
+	Anticipate string `json:"anticipate"`
+	StartTime  string `json:"startTime"`
+	EventTime  string `json:"eventTime"`
+	EndTime    string `json:"endTime"`
+	Fear       int    `json:"fear"`
+	Joy        int    `json:"joy"`
+	Anger      int    `json:"anger"`
+	Sad        int    `json:"sad"`
+	Disgust    int    `json:"disgust"`
+	Surprise   int    `json:"surprise"`
+	Contempt   int    `json:"contempt"`
+	Interest   int    `json:"interest"`
+	Comment    string `json:"comment"`
 }
 
 // Lizzie Peaks
