@@ -24,7 +24,7 @@ func (s *server) uploadMarkEventCall(config ConfigObj) http.HandlerFunc {
 			return
 		}
 
-		fmt.Println(parsedResonse.IsReaction)
+		fmt.Println(parsedResonse.Anticipate)
 
 		if database.InsertMarkEventObj(parsedResonse, config) {
 			w.WriteHeader(200)
