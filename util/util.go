@@ -1,7 +1,9 @@
-package serverutils
+package util
 
 import (
 	"fmt"
+	"log"
+	"strconv"
 	"time"
 )
 
@@ -26,4 +28,14 @@ func StringToDate(unparsed string) time.Time {
 	}
 	//fmt.Println(t.Format("20060102150405"))
 	return t
+}
+
+// Returns the string of strconv.Atoi. returns the max int when fails
+func BetterAtoi(s string) int {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		log.Println(err)
+		return ^int(0)
+	}
+	return i
 }
