@@ -1,7 +1,8 @@
-package lizzie_todoist_worker
+package main
+
+//package todoist_worker
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -28,7 +29,7 @@ func getTasks(config Configuration) {
 }
 
 func readConfig() Configuration {
-	file, err1 := os.Open("../config/todoist.json")
+	file, err1 := os.Open("../configSecrets/todoist.json")
 	if err1 != nil {
 		log.Fatalf("Unable to read todoist config file: %v", err1)
 	}
@@ -47,4 +48,8 @@ func startTodoist() {
 	fmt.Println("asd")
 	getTasks(config)
 
+}
+
+func main() {
+	startTodoist()
 }

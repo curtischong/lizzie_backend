@@ -51,12 +51,13 @@ create table bio.heartrate(
 create table emotion.evaluation(
   unixt bigint not null,
   ts timestamp not null,
-  accomplished_eval smallint,
-  social_eval smallint,
-  exhausted_eval smallint,
-  tired_eval smallint,
-  happy_eval smallint,
-  comments text
+  accomplished smallint not null,
+  social smallint not null,
+  exhausted smallint not null,
+  tired smallint not null,
+  happy smallint not null,
+  comments text,
+  evalLocation text not null
 );
 
 -- Events

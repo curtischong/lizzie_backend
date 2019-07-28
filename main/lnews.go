@@ -8,35 +8,49 @@ import (
 	"encoding/json"
 	database "github.com/curtischong/lizzie_server/database"
 	network "github.com/curtischong/lizzie_server/network"
-	utils "github.com/curtischong/lizzie_server/util"
+	util "github.com/curtischong/lizzie_server/util"
 	"log"
 	"net/http"
 )
 
-type GetCardsAndPanelsObj = network.GetCardsAndPanelsObj
+type GetCardsObj = network.GetCardsObj
+type GetPanelsObj = network.GetPanelsObj
 type DismissPanelObj = network.DismissPanelObj
 
-func (s *server) getCardsAndPanelsCall(config ConfigObj) http.HandlerFunc {
+func (s *server) getNewsCards(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		enableCors(w, response)
 
 		q := response.URL.Query()
-		parsedResonse := GetCardsAndPanelsObj{
-			CardAmount:  utils.BetterAtoi(q.Get("cardAmount")),
-			CardOffset:  utils.BetterAtoi(q.Get("cardOffset")),
-			PanelAmount: utils.BetterAtoi(q.Get("panelAmount")),
-			PanelOffset: utils.BetterAtoi(q.Get("panelOffset")),
+		parsedResonse := GetCardsObj{
+			CardAmount: util.BetterAtoi(q.Get("cardAmount")),
+			CardOffset: util.BetterAtoi(q.Get("cardOffset")),
 		}
 
 		cards, cardsSucc := database.GetCards(parsedResonse, config)
+		if cardsSucc {
+			cardsJsonStr, _ := json.Marshal(cards)
+			w.Write([]byte(cardsJsonStr))
+		} else {
+			w.WriteHeader(500)
+		}
+	}
+}
+
+func (s *server) getNewsPanels(config ConfigObj) http.HandlerFunc {
+	return func(w http.ResponseWriter, response *http.Request) {
+		enableCors(w, response)
+
+		q := response.URL.Query()
+		parsedResonse := GetPanelsObj{
+			PanelAmount: util.BetterAtoi(q.Get("panelAmount")),
+			PanelOffset: util.BetterAtoi(q.Get("panelOffset")),
+		}
+
 		panels, panelsSucc := database.GetPanels(parsedResonse, config)
-		//log.Println(panelsSucc)
-
-		if cardsSucc && panelsSucc {
-			cardsAndPanelsObj := map[string][]map[string]string{"cards": cards, "panels": panels}
-			cardsAndPanelsJsonStr, _ := json.Marshal(cardsAndPanelsObj)
-
-			w.Write([]byte(cardsAndPanelsJsonStr))
+		if panelsSucc {
+			panelsJsonStr, _ := json.Marshal(panels)
+			w.Write([]byte(panelsJsonStr))
 		} else {
 			w.WriteHeader(500)
 		}
@@ -70,24 +84,12 @@ func (s *server) getPeaksSkills(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		enableCors(w, response)
 
-		// TODO: finish this
-		q := response.URL.Query()
-		parsedResonse := GetCardsAndPanelsObj{
-			CardAmount:  utils.BetterAtoi(q.Get("cardAmount")),
-			CardOffset:  utils.BetterAtoi(q.Get("cardOffset")),
-			PanelAmount: utils.BetterAtoi(q.Get("panelAmount")),
-			PanelOffset: utils.BetterAtoi(q.Get("panelOffset")),
-		}
+		skills, skillsSucc := database.GetPeaksSkills(config)
 
-		cards, cardsSucc := database.GetCards(parsedResonse, config)
-		panels, panelsSucc := database.GetPanels(parsedResonse, config)
-		//log.Println(panelsSucc)
+		if skillsSucc {
+			skillsJsonStr, _ := json.Marshal(skills)
 
-		if cardsSucc && panelsSucc {
-			cardsAndPanelsObj := map[string][]map[string]string{"cards": cards, "panels": panels}
-			cardsAndPanelsJsonStr, _ := json.Marshal(cardsAndPanelsObj)
-
-			w.Write([]byte(cardsAndPanelsJsonStr))
+			w.Write([]byte(skillsJsonStr))
 		} else {
 			w.WriteHeader(500)
 		}

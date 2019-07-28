@@ -34,6 +34,7 @@ func StringToDate(unparsed string) time.Time {
 func BetterAtoi(s string) int {
 	i, err := strconv.Atoi(s)
 	if err != nil {
+		log.Println("failed to parse string to int with error:")
 		log.Println(err)
 		return ^int(0)
 	}

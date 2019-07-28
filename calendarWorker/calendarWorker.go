@@ -1,4 +1,4 @@
-package lizzie_calendar_worker
+package calendar_worker
 
 import (
 	"encoding/json"
@@ -132,4 +132,8 @@ func startCalendar() {
 			log.Fatalf("Unable to create event. %v\n", err)
 		}
 		fmt.Printf("Event created: %s\n", event.HtmlLink)*/
+}
+
+func main() {
+	startCalendar()
 }

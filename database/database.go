@@ -36,7 +36,8 @@ type ScheduledReviewObj = network.ScheduledReviewObj
 type TyperObj = network.TyperObj
 type MessengerObj = network.MessengerObj
 
-type GetCardsAndPanelsObj = network.GetCardsAndPanelsObj
+type GetCardsObj = network.GetCardsObj
+type GetPanelsObj = network.GetPanelsObj
 
 type DBConfigObj = config.DBConfigObj
 type ConfigObj = config.ConfigObj
@@ -82,7 +83,7 @@ func connectDB(config ConfigObj) *sql.DB {
 		panic(err)
 	}
 
-	fmt.Printf("Successfully connected to DB with configuration %v\n", config.DBConfig.DBConfigStr)
+	fmt.Printf("Successfully connected to DB")
 	return db
 }
 
@@ -131,14 +132,14 @@ func PrintQuery(config ConfigObj, query string) {
 
 }
 
-func GetCards(getCardsAndPanelsObj GetCardsAndPanelsObj, config ConfigObj) ([]map[string]string, bool) {
+func GetCards(getCardsObj GetCardsObj, config ConfigObj) ([]map[string]string, bool) {
 	db := connectDB(config)
 	defer db.Close()
 
 	var cards = make([]map[string]string, 0)
 
 	getCardsQuery := `select unixt, card from lnews.card ORDER BY unixt DESC LIMIT $1 offset $2`
-	rows, err := db.Query(getCardsQuery, getCardsAndPanelsObj.CardAmount, getCardsAndPanelsObj.CardOffset)
+	rows, err := db.Query(getCardsQuery, getCardsObj.CardAmount, getCardsObj.CardOffset)
 	if err != nil {
 		log.Fatal(err)
 		return cards, false
@@ -166,13 +167,13 @@ func GetCards(getCardsAndPanelsObj GetCardsAndPanelsObj, config ConfigObj) ([]ma
 	return cards, true
 }
 
-func GetPanels(getCardsAndPanelsObj GetCardsAndPanelsObj, config ConfigObj) ([]map[string]string, bool) {
+func GetPanels(getPanelsObj GetPanelsObj, config ConfigObj) ([]map[string]string, bool) {
 	db := connectDB(config)
 	defer db.Close()
 
 	var panels = make([]map[string]string, 0)
-	getPanelsQuery := `select unixt, dismissed, panel from lnews.panel ORDER BY unixt DESC LIMIT $1 offset $2`
-	rows, err := db.Query(getPanelsQuery, getCardsAndPanelsObj.PanelAmount, getCardsAndPanelsObj.PanelOffset)
+	getPanelsQuery := `select unixt, dismissed, panel from lnews.panel WHERE dismissed=false ORDER BY unixt DESC LIMIT $1 offset $2`
+	rows, err := db.Query(getPanelsQuery, getPanelsObj.PanelAmount, getPanelsObj.PanelOffset)
 	if err != nil {
 		log.Fatal(err)
 		return panels, false
@@ -199,6 +200,63 @@ func GetPanels(getCardsAndPanelsObj GetCardsAndPanelsObj, config ConfigObj) ([]m
 	//fmt.Println(string(cardsJson))
 
 	return panels, true
+}
+
+func GetPeaksSkills(config ConfigObj) ([]map[string]string, bool) {
+	db := connectDB(config)
+	defer db.Close()
+
+	var skills = make([]map[string]string, 0)
+	getSkillsQuery := `select time_learned_unixt, time_spent_learning, concept, new_learnings, old_skills, percent_new from peaks.skill ORDER BY unixt DESC LIMIT $1 offset $2`
+	rows, err := db.Query(getSkillsQuery, 10, 0)
+	if err != nil {
+		log.Fatal(err)
+		return skills, false
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var time_learned_unixt string
+		var time_spent_learning string
+		var concept string
+		var new_learnings string
+		var old_skills string
+		var percent_new string
+		err = rows.Scan(&time_learned_unixt, &time_spent_learning, &concept, &new_learnings, &old_skills, &percent_new)
+		if err != nil {
+			log.Fatal(err)
+			return skills, false
+		}
+		skillsJson := map[string]string{
+			"time_learned_unixt":  time_learned_unixt,
+			"time_spent_learning": time_spent_learning,
+			"concept":             concept,
+			"new_learnings":       new_learnings,
+			"old_skills":          old_skills,
+			"percent_new":         percent_new}
+		skills = append(skills, skillsJson)
+	}
+	// get any error encountered during iteration
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+		return skills, false
+	}
+
+	return skills, true
+}
+
+func DismissPanel(panelTime int64, config ConfigObj) bool {
+	db := connectDB(config)
+	defer db.Close()
+	log.Println(panelTime)
+	dismissPanelQuery := `UPDATE lnews.panel SET dismissed=true where unixt=$1`
+	rows, err := db.Query(dismissPanelQuery, panelTime)
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
+	rows.Close()
+	return true
 }
 
 func InsertEmotionEvaluationObj(sample EmotionEvaluationObj, config ConfigObj) bool {
@@ -370,32 +428,14 @@ func InsertSkillObj(sample SkillObj, config ConfigObj) bool {
 	db := connectDB(config)
 	defer db.Close()
 
-	/*parsedPercentNew, err := strconv.ParseInt(sample.PercentNew, 10, 64)
-	parsedTimeSpentLearning, err := strconv.ParseInt(sample.TimeSpentLearning, 10, 64)
-	parsedTimeLearned, err := strconv.ParseFloat(sample.TimeLearned, 64)
+	insertSkillObj := `insert into peaks.skill (time_learned_unixt, time_learned_ts, time_spent_learning, concept, new_learnings, old_skills, percent_new)
+	values($1, $2, $3, $4, $5, $6, $7)`
+	_, err := db.Exec(insertSkillObj, sample.TimeLearnedUnixt, sample.TimeLearnedTs, sample.TimeSpentLearning, sample.Concept, sample.NewLearnings, sample.OldSkills, sample.PercentNew)
 
-	fields := map[string]interface{}{
-		"concept":             sample.Concept,
-		"new_earnings":        sample.NewLearnings,
-		"old_skills":          sample.OldSkills,
-		"percent_new":         parsedPercentNew,
-		"time_spent_learning": parsedTimeSpentLearning,
+	if err != nil {
+		log.Fatal(err)
+		return false
 	}
-	/*
-
-		pt, err := influx.NewPoint("learned_skills", nil, fields, time.Unix(0, int64(parsedTimeLearned*1000000)))
-		if err != nil {
-			log.Fatal(err)
-			return false
-		}
-		bp.AddPoint(pt)
-
-		// write the batch
-		if err := db.DBClient.Write(bp); err != nil {
-			log.Fatal(err)
-			return false
-		}
-		log.Printf("added learnedSkill!")*/
 	return true
 }
 

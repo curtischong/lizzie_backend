@@ -26,11 +26,18 @@ type MessengerObj struct {
 
 // LNews
 
-type GetCardsAndPanelsObj struct {
-	CardAmount  int `json:"cardAmount"`
-	CardOffset  int `json:"cardOffset"`
+type GetCardsObj struct {
+	CardAmount int `json:"cardAmount"`
+	CardOffset int `json:"cardOffset"`
+}
+
+type GetPanelsObj struct {
 	PanelAmount int `json:"panelAmount"`
 	PanelOffset int `json:"panelOffset"`
+}
+
+type DismissPanelObj struct {
+	Unixt int64 `json:"unixt"`
 }
 
 // BioSamples
@@ -54,8 +61,10 @@ type EmotionEvaluationObj struct {
 	TiredEval        int    `json:"tiredEval"`
 	HappyEval        int    `json:"happyEval"`
 	Comments         string `json:"comments"`
+	EvalLocation     string `json:"evalLocation"`
 }
 
+// TBH I DON'T THINK I NEED THE FOLLOWING 2 CLASSES
 // EmotionEvaluationNetworkObj describes a received EmotionEvaluation from the network
 type EmotionEvaluationNetworkObj struct {
 	EvalDatetime string `json:"evalDatetime"`
@@ -98,13 +107,15 @@ type MarkEventObj struct {
 // it's not time started learning
 // remember that it can take multiple days to learn so
 // that's why we have timeSpentLearning not timeStartLearning
+
 type SkillObj struct {
-	TimeLearned       string `json:"timeLearned"`       // represent to 2 decimal places (smallint) (0-10,000)
-	TimeSpentLearning string `json:"timeSpentLearning"` // represent in seconds (int)
-	Concept           string `json:"concept"`
-	NewLearnings      string `json:"newLearnings"`
-	OldSkills         string `json:"oldSkills"`
-	PercentNew        string `json:"percentNew"`
+	TimeLearnedUnixt  int64     `json:"timeLearnedUnixt,string"` // represent to 2 decimal places (smallint) (0-10,000)
+	TimeLearnedTs     time.Time `json:"timeLearnedTs"`           // represent to 2 decimal places (smallint) (0-10,000)
+	TimeSpentLearning string    `json:"timeSpentLearning"`       // represent in seconds (int)
+	Concept           string    `json:"concept"`
+	NewLearnings      string    `json:"newLearnings"`
+	OldSkills         string    `json:"oldSkills"`
+	PercentNew        string    `json:"percentNew"`
 }
 
 // ReviewObj describes a received Review
