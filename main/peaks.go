@@ -13,6 +13,22 @@ type SkillObj = network.SkillObj
 type ReviewObj = network.ReviewObj
 type ScheduledReviewObj = network.ScheduledReviewObj
 
+func (s *server) getPeaksSkills(config ConfigObj) http.HandlerFunc {
+	return func(w http.ResponseWriter, response *http.Request) {
+		enableCors(w, response)
+
+		skills, skillsSucc := database.GetPeaksSkills(config)
+
+		if skillsSucc {
+			skillsJsonStr, _ := json.Marshal(skills)
+
+			w.Write([]byte(skillsJsonStr))
+		} else {
+			w.WriteHeader(500)
+		}
+	}
+}
+
 func (s *server) uploadSkillCall(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
 		body := getResponseBody(w, response)

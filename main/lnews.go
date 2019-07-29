@@ -79,19 +79,3 @@ func (s *server) dismissPanel(config ConfigObj) http.HandlerFunc {
 		}
 	}
 }
-
-func (s *server) getPeaksSkills(config ConfigObj) http.HandlerFunc {
-	return func(w http.ResponseWriter, response *http.Request) {
-		enableCors(w, response)
-
-		skills, skillsSucc := database.GetPeaksSkills(config)
-
-		if skillsSucc {
-			skillsJsonStr, _ := json.Marshal(skills)
-
-			w.Write([]byte(skillsJsonStr))
-		} else {
-			w.WriteHeader(500)
-		}
-	}
-}
