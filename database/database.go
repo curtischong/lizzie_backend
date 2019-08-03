@@ -83,7 +83,7 @@ func connectDB(config ConfigObj) *sql.DB {
 		panic(err)
 	}
 
-	fmt.Printf("Successfully connected to DB")
+	fmt.Printf("Successfully connected to DB\n")
 	return db
 }
 
@@ -207,7 +207,7 @@ func GetPeaksSkills(config ConfigObj) ([]map[string]string, bool) {
 	defer db.Close()
 
 	var skills = make([]map[string]string, 0)
-	getSkillsQuery := `select time_learned_unixt, time_spent_learning, concept, new_learnings, old_skills, percent_new from peaks.skill ORDER BY unixt DESC LIMIT $1 offset $2`
+	getSkillsQuery := `select time_learned_unixt, time_learned_ts, time_spent_learning, concept, new_learnings, old_skills, percent_new from peaks.skill ORDER BY time_learned_unixt DESC LIMIT $1 offset $2`
 	rows, err := db.Query(getSkillsQuery, 10, 0)
 	if err != nil {
 		log.Fatal(err)
@@ -216,18 +216,20 @@ func GetPeaksSkills(config ConfigObj) ([]map[string]string, bool) {
 	defer rows.Close()
 	for rows.Next() {
 		var time_learned_unixt string
+		var time_learned_ts string
 		var time_spent_learning string
 		var concept string
 		var new_learnings string
 		var old_skills string
 		var percent_new string
-		err = rows.Scan(&time_learned_unixt, &time_spent_learning, &concept, &new_learnings, &old_skills, &percent_new)
+		err = rows.Scan(&time_learned_unixt, &time_learned_ts, &time_spent_learning, &concept, &new_learnings, &old_skills, &percent_new)
 		if err != nil {
 			log.Fatal(err)
 			return skills, false
 		}
 		skillsJson := map[string]string{
 			"time_learned_unixt":  time_learned_unixt,
+			"time_learned_ts":     time_learned_ts,
 			"time_spent_learning": time_spent_learning,
 			"concept":             concept,
 			"new_learnings":       new_learnings,
@@ -245,17 +247,29 @@ func GetPeaksSkills(config ConfigObj) ([]map[string]string, bool) {
 	return skills, true
 }
 
+func DeletePeaksSkill(timeLearnedUnixt int64, config ConfigObj) bool {
+	db := connectDB(config)
+	defer db.Close()
+	query := `delete from peaks.skill where time_learned_unixt = $1;`
+	rows, err := db.Query(query, timeLearnedUnixt)
+	defer rows.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return false
+}
+
 func DismissPanel(panelTime int64, config ConfigObj) bool {
 	db := connectDB(config)
 	defer db.Close()
 	log.Println(panelTime)
 	dismissPanelQuery := `UPDATE lnews.panel SET dismissed=true where unixt=$1`
 	rows, err := db.Query(dismissPanelQuery, panelTime)
+	defer rows.Close()
 	if err != nil {
 		log.Fatal(err)
 		return false
 	}
-	rows.Close()
 	return true
 }
 
@@ -424,19 +438,60 @@ func InsertBioSamplesObj(sample BioSamplesObj, config ConfigObj) bool {
 	return true
 }
 
+func skillExists(timeLearnedUnixt int64, db *sql.DB) bool {
+	query := `SELECT exists (SELECT 1 FROM peaks.skill WHERE time_learned_unixt = $1 LIMIT 1);`
+	rows, err := db.Query(query, timeLearnedUnixt)
+	defer rows.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for rows.Next() {
+		var exists string
+		err = rows.Scan(&exists)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(exists)
+		if exists == "true" {
+			return true
+		} else {
+			return false
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return false
+}
+
 func InsertSkillObj(sample SkillObj, config ConfigObj) bool {
 	db := connectDB(config)
 	defer db.Close()
 
-	insertSkillObj := `insert into peaks.skill (time_learned_unixt, time_learned_ts, time_spent_learning, concept, new_learnings, old_skills, percent_new)
-	values($1, $2, $3, $4, $5, $6, $7)`
-	_, err := db.Exec(insertSkillObj, sample.TimeLearnedUnixt, sample.TimeLearnedTs, sample.TimeSpentLearning, sample.Concept, sample.NewLearnings, sample.OldSkills, sample.PercentNew)
+	if skillExists(sample.TimeLearnedUnixt, db) {
+		updateSkillObj := ` UPDATE peaks.skill SET time_learned_ts=$2, time_spent_learning = $3, concept=$4, new_learnings=$5, old_skills=$6, percent_new=$7
+		WHERE time_learned_unixt= $1;`
+		_, err := db.Exec(updateSkillObj, sample.TimeLearnedUnixt, sample.TimeLearnedTs, sample.TimeSpentLearning, sample.Concept, sample.NewLearnings, sample.OldSkills, sample.PercentNew)
 
-	if err != nil {
-		log.Fatal(err)
-		return false
+		if err != nil {
+			log.Fatal(err)
+			return false
+		}
+		return true
+	} else {
+		insertSkillObj := `insert into peaks.skill (time_learned_unixt, time_learned_ts, time_spent_learning, concept, new_learnings, old_skills, percent_new)
+		values($1, $2, $3, $4, $5, $6, $7)`
+		_, err := db.Exec(insertSkillObj, sample.TimeLearnedUnixt, sample.TimeLearnedTs, sample.TimeSpentLearning, sample.Concept, sample.NewLearnings, sample.OldSkills, sample.PercentNew)
+
+		if err != nil {
+			log.Fatal(err)
+			return false
+		}
+		return true
 	}
-	return true
 }
 
 func InsertReviewObj(sample ReviewObj, config ConfigObj) bool {

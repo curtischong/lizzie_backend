@@ -109,13 +109,14 @@ type MarkEventObj struct {
 // that's why we have timeSpentLearning not timeStartLearning
 
 type SkillObj struct {
-	TimeLearnedUnixt  int64     `json:"timeLearnedUnixt,string"` // represent to 2 decimal places (smallint) (0-10,000)
-	TimeLearnedTs     time.Time `json:"timeLearnedTs"`           // represent to 2 decimal places (smallint) (0-10,000)
-	TimeSpentLearning string    `json:"timeSpentLearning"`       // represent in seconds (int)
+	// TimeLearnedUnixt  int64     `json:"timeLearnedUnixt,string"` // represent to 2 decimal places (smallint) (0-10,000)
+	TimeLearnedUnixt  int64     `json:"timeLearnedUnixt"`  // represent to 2 decimal places (smallint) (0-10,000)
+	TimeLearnedTs     time.Time `json:"timeLearnedTs"`     // represent to 2 decimal places (smallint) (0-10,000)
+	TimeSpentLearning int       `json:"timeSpentLearning"` // represent in seconds (int)
 	Concept           string    `json:"concept"`
 	NewLearnings      string    `json:"newLearnings"`
 	OldSkills         string    `json:"oldSkills"`
-	PercentNew        string    `json:"percentNew"`
+	PercentNew        int       `json:"percentNew"`
 }
 
 // ReviewObj describes a received Review
@@ -133,4 +134,8 @@ type ScheduledReviewObj struct {
 	TimeScheduled     string `json:"timeScheduled"`
 	Concept           string `json:"concept"`
 	ScheduledDuration string `json:"scheduleDuration"`
+}
+
+type DeleteSkillObj struct {
+	TimeLearnedUnixt int64 `json:"timeLearnedUnixt"`
 }

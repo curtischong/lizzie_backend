@@ -12,6 +12,7 @@ import (
 type SkillObj = network.SkillObj
 type ReviewObj = network.ReviewObj
 type ScheduledReviewObj = network.ScheduledReviewObj
+type DeleteSkillObj = network.DeleteSkillObj
 
 func (s *server) getPeaksSkills(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
@@ -29,8 +30,31 @@ func (s *server) getPeaksSkills(config ConfigObj) http.HandlerFunc {
 	}
 }
 
+func (s *server) deletePeaksSkills(config ConfigObj) http.HandlerFunc {
+	return func(w http.ResponseWriter, response *http.Request) {
+		enableCors(w, response)
+		body := getResponseBody(w, response)
+		parsedResonse := DeleteSkillObj{}
+		jsonErr := json.Unmarshal(body, &parsedResonse)
+		if jsonErr != nil {
+			log.Println(body)
+			log.Println("couldn't parse body")
+			log.Println(jsonErr)
+			w.WriteHeader(500)
+			return
+		}
+
+		if database.DeletePeaksSkill(parsedResonse.TimeLearnedUnixt, config) {
+			w.WriteHeader(200)
+		} else {
+			w.WriteHeader(500)
+		}
+	}
+}
+
 func (s *server) uploadSkillCall(config ConfigObj) http.HandlerFunc {
 	return func(w http.ResponseWriter, response *http.Request) {
+		enableCors(w, response)
 		body := getResponseBody(w, response)
 		parsedResonse := SkillObj{}
 		jsonErr := json.Unmarshal(body, &parsedResonse)
